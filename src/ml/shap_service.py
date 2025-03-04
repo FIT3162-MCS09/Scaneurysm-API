@@ -1,6 +1,6 @@
 import shap
 import numpy as np
-from typing import Dict, Any
+from typing import Dict, Any, List, Union
 from .model_service import ModelService
 
 class ShapService:
@@ -11,8 +11,9 @@ class ShapService:
 
     def initialize_explainer(self):
         """Initialize SHAP explainer with dummy background data"""
-        # Create dummy background data
-        background_data = np.random.rand(100, len(self.model_service.model.feature_importances_))
+        # Create dummy background data matching the model's feature count
+        n_features = len(self.model_service.get_feature_names())
+        background_data = np.random.rand(100, n_features)
         self.explainer = shap.TreeExplainer(self.model_service.model, background_data)
 
     def get_feature_importance(self, features: Dict[str, Any]) -> Dict[str, float]:
@@ -21,11 +22,24 @@ class ShapService:
             self.initialize_explainer()
         
         # Convert dictionary to numpy array
-        X = np.array(list(features.values())).reshape(1, -1)
+        feature_names = self.model_service.get_feature_names()
+        X = np.array([features[name] for name in feature_names]).reshape(1, -1)
+        
+        # Get SHAP values
         shap_values = self.explainer.shap_values(X)
         
-        # For binary classification, shap_values might be a list with two elements
+        # Handle different types of SHAP value outputs
         if isinstance(shap_values, list):
-            shap_values = shap_values[1]  # Take positive class values
+            # For multi-class problems, take the positive class
+            shap_values = shap_values[1]
+        elif isinstance(shap_values, np.ndarray):
+            # For binary classification or regression
+            if shap_values.ndim > 2:
+                shap_values = shap_values[..., 1]  # Take positive class for multi-class
+        
+        # Ensure we have a 2D array
+        if shap_values.ndim == 1:
+            shap_values = shap_values.reshape(1, -1)
             
-        return {f'feature_{i}': float(value) for i, value in enumerate(shap_values[0])}
+        # Create feature importance dictionary using actual feature names
+        return {name: float(value) for name, value in zip(feature_names, shap_values[0])}

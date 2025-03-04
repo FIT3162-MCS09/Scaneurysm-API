@@ -1,15 +1,37 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
 from rest_framework.serializers import Serializer
 from rest_framework import serializers
+from ml import shap_service, model_service
+from utils.exception_handlers import handle_exceptions
+import logging
 
-# Input/Output serializers for documentation
+logger = logging.getLogger(__name__)
+
+class FeatureSerializer(Serializer):
+    feature1 = serializers.FloatField(
+        help_text="Value for feature 1",
+        required=True
+    )
+    feature2 = serializers.FloatField(
+        help_text="Value for feature 2",
+        required=True
+    )
+    feature3 = serializers.FloatField(
+        help_text="Value for feature 3",
+        required=True
+    )
+    feature4 = serializers.FloatField(
+        help_text="Value for feature 4",
+        required=True
+    )
+
+# Input serializer with explicit fields
 class FeaturesInputSerializer(Serializer):
-    features = serializers.DictField(
-        child=serializers.FloatField(),
-        help_text="Dictionary of feature values"
+    features = FeatureSerializer(
+        help_text="Feature values for prediction"
     )
 
 class PredictionOutputSerializer(Serializer):
@@ -22,60 +44,77 @@ class PredictionOutputSerializer(Serializer):
     )
 
 class PredictionView(APIView):
+    @handle_exceptions
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Dummy data setup (no need to import real services)
-        self.dummy_prediction = 1.0  # Dummy prediction result
-        self.dummy_feature_importance = {
-            'feature1': 0.2,
-            'feature2': 0.3,
-            'feature3': -0.1,
-            'feature4': 0.4
-        }
 
     @extend_schema(
         request=FeaturesInputSerializer,
-        responses={200: PredictionOutputSerializer},
-        description="Make a prediction and return SHAP explanations (dummy data for testing)",
+        responses={
+            200: PredictionOutputSerializer,
+            400: {"type": "object", "properties": {"error": {"type": "string"}}}
+        },
+        description="""
+        Make a prediction and return SHAP explanations.
+        
+        This endpoint accepts feature values and returns both the prediction and feature importance values.
+        All features (feature1, feature2, feature3, feature4) must be provided as float values.
+        """,
         examples=[
             OpenApiExample(
                 'Valid Input Example',
                 value={
-                    'features': {
-                        'feature1': 0.5,
-                        'feature2': 0.3,
-                        'feature3': 0.7,
-                        'feature4': 0.2
+                    "features": {
+                        "feature1": 0.5,
+                        "feature2": 0.3,
+                        "feature3": 0.7,
+                        "feature4": 0.2
                     }
                 },
                 request_only=True,
+                summary="Example feature values for prediction"
             ),
             OpenApiExample(
                 'Success Response Example',
                 value={
-                    'prediction': 1.0,
-                    'feature_importance': {
-                        'feature1': 0.2,
-                        'feature2': 0.3,
-                        'feature3': -0.1,
-                        'feature4': 0.4
+                    "prediction": 1.0,
+                    "feature_importance": {
+                        "feature1": 0.2,
+                        "feature2": 0.3,
+                        "feature3": -0.1,
+                        "feature4": 0.4
                     }
                 },
                 response_only=True,
+                summary="Example prediction result with feature importance"
             ),
-        ]
+        ],
+        tags=['Prediction']
     )
     def post(self, request):
-        """Return dummy prediction and feature importance (SHAP values)"""
+        """Make a prediction and return feature importance values"""
         try:
-            features = request.data.get('features', {})
+            serializer = FeaturesInputSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    {'error': 'Invalid input format', 'details': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            features = serializer.validated_data['features']
             
-            # Return the dummy prediction and dummy feature importance
+            # Get both prediction and feature importance
+            model= model_service.ModelService()
+            prediction = model.predict(features)
+            shap = shap_service.ShapService(model)
+            feature_importance = shap.get_feature_importance(features)
+            
             return Response({
-                'prediction': self.dummy_prediction,
-                'feature_importance': self.dummy_feature_importance
+                'prediction': prediction,
+                'feature_importance': feature_importance
             })
         except Exception as e:
+            logger.error("An error occurred: %s", str(e), exc_info=True)
             return Response(
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
