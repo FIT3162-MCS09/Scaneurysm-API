@@ -26,4 +26,4 @@ COPY . /app/
 EXPOSE 8000
 
 # Command to run the application (adjusted to point to the manage.py file in src/)
-CMD ["python", "src/manage.py", "runserver", "0.0.0.0:8000"]
+# CMD ["python", "src/manage.py", "runserver", "0.0.0.0:8000"]
