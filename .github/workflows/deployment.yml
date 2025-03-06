@@ -3,6 +3,7 @@ name: Build and Deploy to Azure Container Apps
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:  # Enables manual trigger from GitHub Actions tab
 
 jobs:
   build-and-deploy:
@@ -21,9 +22,7 @@ jobs:
     - name: Build and deploy Container App
       uses: Azure/container-apps-deploy-action@v2
       with:
-        # ACR Details
-        acrName: MCS09registry
-        # Application Details
-        containerAppName: mcs09-backend
-        resourceGroup: MCS09
+        acrName: myregistry
+        containerAppName: my-container-app
+        resourceGroup: my-rg
         appSourcePath: ${{ github.workspace }}
