@@ -28,7 +28,7 @@ jobs:
     - name: Build and deploy Container App
       uses: Azure/container-apps-deploy-action@v2
       with:
-        acrName: MCS09
+        acrName: MCS09registry
         containerAppName: mcs09-backend
-        resourceGroup: MCS09registry
+        resourceGroup: MCS09
         appSourcePath: ${{ github.workspace }}
