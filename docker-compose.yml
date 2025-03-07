@@ -11,6 +11,12 @@ services:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1
+      - ENDPOINT=${ENDPOINT}
+      - USER=${USER}
+      - PASS=${PASS}
+      - DB_NAME=${DB_NAME}
+      - DEBUG=False
+      - DJANGO_SETTINGS_MODULE=core.settings
     command: python src/manage.py runserver 0.0.0.0:8000
     restart: unless-stopped
 
