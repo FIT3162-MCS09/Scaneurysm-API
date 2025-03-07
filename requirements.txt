@@ -6,4 +6,4 @@ pandas>=2.0.0
 scikit-learn>=1.2.0
 joblib>=1.2.0
 drf-spectacular>=0.26.0
-pymysql==1.1.0
+pymysql==1.1.1
