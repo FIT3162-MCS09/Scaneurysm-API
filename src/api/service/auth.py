@@ -12,7 +12,7 @@ class AuthService:
         """
         try:
             user = User.objects.get(username=username)
-            print(user)
+            logging.debug(f'User found: {user}')
             if user is None:
                 return None
             if check_password(password, user.hashed_password):
