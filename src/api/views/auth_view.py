@@ -38,7 +38,7 @@ class SignInView(APIView):
     @extend_schema(
         request=SignInSerializer,
         responses={
-            201: SignInSerializer,
+            200: SignInSerializer,
             400: 'Bad Request'
         }
     )
