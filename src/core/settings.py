@@ -12,7 +12,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -21,9 +20,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'drf_spectacular',  # Add this
+    'drf_spectacular',
     'api',
     'ml',
+    'models',
 ]
 
 MIDDLEWARE = [
@@ -61,7 +61,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DB_NAME', 'database-mcs09'),
+        'NAME': os.environ.get('DB_NAME', 'mcs09'),
         'USER': os.environ.get('USER'),
         'PASSWORD': os.environ.get('PASS'),
         'HOST': os.environ.get('ENDPOINT'),
