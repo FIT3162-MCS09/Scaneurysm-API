@@ -1,7 +1,9 @@
+import logging
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
 from models.user import User
 
+logger = logging.getLogger(__name__)
 
 class AuthService:
     @staticmethod
