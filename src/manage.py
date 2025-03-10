@@ -4,6 +4,8 @@ import os
 import sys
 import pymysql
 import time
+import boto3
+
 
 def get_db_connection():
     """Establish database connection with retry logic"""
@@ -30,6 +32,16 @@ def get_db_connection():
                 print(f"All connection attempts failed: {str(e)}")
                 raise
 
+def get_s3_connection():
+    # Let's use Amazon S3
+    try:
+        s3 = boto3.resource('s3')
+        for bucket in s3.buckets.all():
+            print(bucket.name)
+    except:
+        print("Failed to connect to S3")
+        raise
+
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
@@ -42,7 +54,15 @@ def main():
     except Exception as e:
         print(f"Failed to connect to database: {str(e)}")
         # You might want to exit here if database connection is crucial
-        # sys.exit(1)
+        sys.exit(1)
+    
+    try:
+        get_s3_connection()
+        print("S3 connection established successfully")
+    except Exception as e:
+        print(f"Failed to connect to S3: {str(e)}")
+        # You might want to exit here if S3 connection is crucial
+        sys.exit(1)
     
     try:
         from django.core.management import execute_from_command_line
