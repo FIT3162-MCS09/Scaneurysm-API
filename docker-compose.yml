@@ -10,6 +10,7 @@ services:
     volumes:
       - .:/app
       - ~/.aws:/root/.aws:ro
+      - ~/.env:/root/.env:ro
     environment:
       - PYTHONUNBUFFERED=1
       - ENDPOINT=${ENDPOINT}
