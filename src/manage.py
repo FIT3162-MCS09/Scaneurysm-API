@@ -33,13 +33,22 @@ def get_db_connection():
                 raise
 
 def get_s3_connection():
-    # Let's use Amazon S3
+    
     try:
-        s3 = boto3.resource('s3')
+        # boto3 will automatically check for AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
+        # We just need to specify the region
+        s3 = boto3.resource(
+            's3',
+            region_name='ap-southeast-1'
+        )
+        
+        # List all buckets
         for bucket in s3.buckets.all():
             print(bucket.name)
-    except:
-        print("Failed to connect to S3")
+        
+        return s3
+    except Exception as e:
+        print(f"Failed to connect to S3: {str(e)}")
         raise
 
 def main():
