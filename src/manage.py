@@ -35,11 +35,17 @@ def get_db_connection():
 def get_s3_connection():
     
     try:
-        # boto3 will automatically check for AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
-        # We just need to specify the region
+        # Print connection information with fallback messages
+        print(f"AWS Access Key ID: {'*****' if os.environ.get('AWS_ACCESS_KEY_ID') else 'AWS_ACCESS_KEY_ID not set'}")
+        print(f"AWS Secret Access Key: {'*****' if os.environ.get('AWS_SECRET_ACCESS_KEY') else 'AWS_SECRET_ACCESS_KEY not set'}")
+        print(f"AWS Region: {os.environ.get('AWS_REGION', 'ap-southeast-1')}")
+        
+        # Create S3 resource with environment variables
         s3 = boto3.resource(
             's3',
-            region_name='ap-southeast-1'
+            aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
+            region_name=os.environ.get('AWS_REGION', 'ap-southeast-1')
         )
         
         # List all buckets
