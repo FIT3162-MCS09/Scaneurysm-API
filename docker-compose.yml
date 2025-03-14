@@ -17,6 +17,8 @@ services:
       - USER=${USER}
       - PASS=${PASS}
       - DB_NAME=${DB_NAME}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - DEBUG=False
       - DJANGO_SETTINGS_MODULE=core.settings
     command: python src/manage.py runserver 0.0.0.0:8000
