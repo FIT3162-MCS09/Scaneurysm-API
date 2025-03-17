@@ -1,4 +1,3 @@
-# models/apps.py
 from django.apps import AppConfig
 
 class ModelsConfig(AppConfig):
@@ -6,5 +5,5 @@ class ModelsConfig(AppConfig):
     name = 'models'
 
     def ready(self):
-        # Import models here to avoid AppRegistryNotReady error
-        from . import file
+        # Import the specific model from the user.py file
+        from .user import User
