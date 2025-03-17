@@ -128,11 +128,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
+            'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
     },
@@ -140,29 +136,36 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
-            'level': 'INFO',  # Changed to DEBUG to show all messages
+            'level': 'WARNING',  # Only warnings and above for console
         },
         'file': {
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',  # Use rotating file handler
             'filename': 'django-debug.log',
             'formatter': 'verbose',
             'level': 'INFO',
+            'maxBytes': 10485760,  # 10MB
+            'backupCount': 3,      # Keep 3 backup files
         },
     },
     'loggers': {
         '': {  # Root logger
             'handlers': ['console', 'file'],
-            'level': 'INFO',
+            'level': 'WARNING',  # Higher level for root logger
             'propagate': True,
         },
         'django': {  # Django logger
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': True,
+            'handlers': ['file'],
+            'level': 'WARNING',  # Only warnings and above
+            'propagate': False,
         },
-        'django.db.backends': {  # Database logger
-            'handlers': ['console'],
-            'level': 'INFO',
+        'django.request': {  # Request logger for errors
+            'handlers': ['console', 'file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'your_app_name': {  # Your specific app logs
+            'handlers': ['console', 'file'],
+            'level': 'INFO',  # More detailed for your app specifically
             'propagate': False,
         },
     },
