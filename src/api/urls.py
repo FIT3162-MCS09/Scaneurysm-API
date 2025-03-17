@@ -7,6 +7,10 @@ from .views.auth_view import (
     LogoutView,
     SessionListView
 )
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 from .views.health_view import HealthView
 from .views.protected_view import ProfileView  # Assuming you implemented this
 
@@ -31,5 +35,10 @@ urlpatterns = [
     # System endpoints
     path('system/', include([
         path('health/', HealthView.as_view(), name='health'),
+    ])),
+
+    path('jwt/', include([
+        path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+        path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     ])),
 ]
