@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'api',
     'ml',
     'models',
+    'middleware',
 ]
 
 MIDDLEWARE = [
@@ -74,13 +75,27 @@ MODEL_DIR = os.path.join(BASE_DIR, 'models')
 
 # Rest Framework settings
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',  # Optional for browsable API
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
         'rest_framework.permissions.AllowAny'
     ],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.MultiPartParser',
     ],
+        'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '20/minute',  # Limit anonymous users
+        'user': '100/minute',  # Limit authenticated users
+        'login': '5/minute',  # Custom throttle for login attempts
+    },
     # Add this for Swagger
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
@@ -152,3 +167,4 @@ LOGGING = {
         },
     },
 }
+AUTH_USER_MODEL = 'models.User'

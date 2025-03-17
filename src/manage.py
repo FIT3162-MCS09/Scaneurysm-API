@@ -63,9 +63,6 @@ def main():
     
     # Try to establish database connection
     try:
-        print(os.environ.get('ENDPOINT'))
-        print(os.environ.get('USER'))
-        print(os.environ.get('PASS'))
         conn = get_db_connection()
         print("Database connection established successfully")
         conn.close()

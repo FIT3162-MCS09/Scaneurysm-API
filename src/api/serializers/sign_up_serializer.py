@@ -6,16 +6,16 @@ from models.doctor import Doctor
 
 
 class UserSerializer(serializers.ModelSerializer):
-    hashed_password = serializers.CharField(write_only=True)  # Ensure password is write-only
+    password = serializers.CharField(write_only=True)  # Ensure password is write-only
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'role', 'hashed_password']
+        fields = ['username', 'email', 'first_name', 'last_name', 'role', 'password']
 
     def create(self, validated_data):
         # Extract and hash the password before saving the user
-        hashed_password = validated_data.pop('hashed_password')
-        validated_data['hashed_password'] = make_password(hashed_password)
+        password = validated_data.pop('password')
+        validated_data['password'] = make_password(password)
         # Create the User object
         user = User.objects.create(**validated_data)
 
