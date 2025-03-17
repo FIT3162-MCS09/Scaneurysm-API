@@ -24,10 +24,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 class PatientSerializer(serializers.ModelSerializer):
     user = UserSerializer()
+    primary_doctor = serializers.PrimaryKeyRelatedField(queryset=Doctor.objects.all(), required=False, allow_null=True)
 
     class Meta:
         model = Patient
-        fields = ['user', 'medical_record_number']
+        fields = ['user', 'medical_record_number', 'birth_date', 'sex', 'primary_doctor']
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
