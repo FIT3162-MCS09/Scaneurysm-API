@@ -26,9 +26,11 @@ INSTALLED_APPS = [
     'ml',
     'models',
     'middleware',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -175,4 +177,18 @@ LOGGING = {
         },
     },
 }
+
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # React default port
+    "http://localhost:8080",  # Vue default port
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8080",
+    # Add your production frontend URL when deploying
+    # "https://your-frontend-domain.com",
+]
+
+# If you want to allow credentials (cookies, authorization headers)
+CORS_ALLOW_CREDENTIALS = True
+
 AUTH_USER_MODEL = 'models.User'
