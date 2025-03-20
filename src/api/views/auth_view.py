@@ -2,10 +2,10 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.authtoken.models import Token
 from django.utils import timezone
 from datetime import timedelta
 from drf_spectacular.utils import extend_schema
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # Fix import paths according to your project structure
 from models.user import User  # Adjust if needed
@@ -28,12 +28,13 @@ class PatientSignUpView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             
-            # Create token for new user
-            token, _ = Token.objects.get_or_create(user=user)
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
             
-            # Include token in response
+            # Include tokens in response
             response_data = serializer.data
-            response_data['token'] = token.key
+            response_data['refresh'] = str(refresh)
+            response_data['access'] = str(refresh.access_token)
             
             return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -51,16 +52,23 @@ class DoctorSignUpView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = DoctorSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
+            doctor = serializer.save()
             
-            # Create token for new user
-            token, _ = Token.objects.get_or_create(user=user)
+            # The doctor model uses the User model's primary key
+            # Get the user associated with this doctor
+            user = doctor.user
             
-            # Include token in response
-            response_data = serializer.data
-            response_data['token'] = token.key
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            
+            # Include tokens in response
+            response_data = serializer.data.copy()
+            response_data['refresh'] = str(refresh)
+            response_data['access'] = str(refresh.access_token)
+            response_data['id'] = user.id  # Get the ID from the user object
             
             return Response(response_data, status=status.HTTP_201_CREATED)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SignInView(APIView):
@@ -70,12 +78,12 @@ class SignInView(APIView):
         request=SignInSerializer,
         responses={
             200: {'type': 'object', 'properties': {
-                'token': {'type': 'string'},
+                'refresh': {'type': 'string'},
+                'access': {'type': 'string'},
                 'user_id': {'type': 'string'},
                 'username': {'type': 'string'},
                 'email': {'type': 'string'},
-                'role': {'type': 'string'},
-                'expires_at': {'type': 'string', 'format': 'date-time'}
+                'role': {'type': 'string'}
             }},
             400: 'Bad Request',
             401: 'Unauthorized'
@@ -90,16 +98,17 @@ class SignInView(APIView):
             ip_address = self.get_client_ip(request)
             user.record_login(ip_address)
             
-            # Get or create token
-            token, _ = Token.objects.get_or_create(user=user)
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
             
-            # Create session record
-            expire_date = timezone.now() + timedelta(days=7)
+            # If tracking sessions is still needed with JWT
             user_agent = request.META.get('HTTP_USER_AGENT', '')
+            expire_date = timezone.now() + timedelta(days=7)
             
+            # Store JWT jti (unique identifier) instead of token
             session = UserSession.objects.create(
                 user=user,
-                token=token.key,
+                token=str(refresh['jti']),  # Using JWT ID as identifier
                 ip_address=ip_address,
                 user_agent=user_agent,
                 device_info=request.data.get('device_info', ''),
@@ -107,12 +116,12 @@ class SignInView(APIView):
             )
             
             return Response({
-                'token': token.key,
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
                 'user_id': user.id,
                 'username': user.username,
                 'email': user.email,
-                'role': user.role,
-                'expires_at': expire_date.isoformat(),
+                'role': user.role
             }, status=status.HTTP_200_OK)
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -125,7 +134,6 @@ class SignInView(APIView):
             ip = request.META.get('REMOTE_ADDR')
         return ip
 
-# Adding LogoutView and SessionListView
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
     
@@ -137,99 +145,18 @@ class LogoutView(APIView):
         }
     )
     def post(self, request):
-        # Deactivate all sessions with this token
-        UserSession.objects.filter(token=request.auth.key).update(is_active=False)
-        
-        # Delete the token
-        request.auth.delete()
-        
-        return Response({
-            'message': 'Successfully logged out'
-        }, status=status.HTTP_200_OK)
-
-
-class SessionListView(APIView):
-    permission_classes = [IsAuthenticated]
-    
-    @extend_schema(
-        responses={
-            200: {'type': 'array', 'items': {
-                'type': 'object',
-                'properties': {
-                    'id': {'type': 'string'},
-                    'device_info': {'type': 'string'},
-                    'ip_address': {'type': 'string'},
-                    'user_agent': {'type': 'string'},
-                    'created_at': {'type': 'string', 'format': 'date-time'},
-                    'expires_at': {'type': 'string', 'format': 'date-time'},
-                    'is_current': {'type': 'boolean'}
-                }
-            }}
-        }
-    )
-    def get(self, request):
-        sessions = UserSession.objects.filter(
-            user=request.user,
-            is_active=True,
-            expires_at__gt=timezone.now()
-        ).order_by('-created_at')
-        
-        sessions_data = [{
-            'id': str(session.id),
-            'device_info': session.device_info,
-            'ip_address': session.ip_address,
-            'user_agent': session.user_agent,
-            'created_at': session.created_at.isoformat(),
-            'expires_at': session.expires_at.isoformat(),
-            'is_current': session.token == request.auth.key
-        } for session in sessions]
-        
-        return Response(sessions_data, status=status.HTTP_200_OK)
-    
-    @extend_schema(
-        request={'type': 'object', 'properties': {
-            'session_id': {'type': 'string'}
-        }},
-        responses={
-            200: {'type': 'object', 'properties': {
-                'message': {'type': 'string'}
-            }},
-            400: 'Bad Request',
-            404: 'Not Found'
-        }
-    )
-    def delete(self, request):
-        session_id = request.data.get('session_id')
-        if not session_id:
-            return Response({
-                'error': 'Session ID is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-            
         try:
-            session = UserSession.objects.get(
-                id=session_id,
-                user=request.user,
-                is_active=True
-            )
+            # Get the JWT ID from the request
+            jti = request.auth.get('jti', '')
             
-            # Don't allow deleting current session through this endpoint
-            if session.token == request.auth.key:
-                return Response({
-                    'error': 'Cannot delete current session. Use logout instead.'
-                }, status=status.HTTP_400_BAD_REQUEST)
+            # Deactivate sessions with this JWT ID
+            if jti:
+                UserSession.objects.filter(token=jti).update(is_active=False)
                 
-            # Deactivate session
-            session.is_active = False
-            session.save()
-            
-            # Delete the token if it exists
-            Token.objects.filter(key=session.token).delete()
-            
             return Response({
-                'message': 'Session successfully terminated'
+                'message': 'Successfully logged out'
             }, status=status.HTTP_200_OK)
-            
-        except UserSession.DoesNotExist:
+        except Exception as e:
             return Response({
-                'error': 'Session not found'
-            }, status=status.HTTP_404_NOT_FOUND)
+                'error': f'Logout failed: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)

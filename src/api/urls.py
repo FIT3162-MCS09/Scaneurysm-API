@@ -5,7 +5,6 @@ from .views.auth_view import (
     DoctorSignUpView, 
     SignInView,
     LogoutView,
-    SessionListView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -22,7 +21,6 @@ urlpatterns = [
         path('signup/doctor/', DoctorSignUpView.as_view(), name='signup_doctor'),
         path('signin/', SignInView.as_view(), name='signin'),
         path('logout/', LogoutView.as_view(), name='logout'),
-        path('sessions/', SessionListView.as_view(), name='sessions'),
         path('profile/', ProfileView.as_view(), name='profile'),
     ])),
     
