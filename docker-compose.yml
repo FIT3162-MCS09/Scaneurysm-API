@@ -14,8 +14,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - ENDPOINT=${ENDPOINT}
-      - USER=${USER}
-      - PASS=${PASS}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
       - DB_NAME=${DB_NAME}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
