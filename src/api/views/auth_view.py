@@ -14,7 +14,7 @@ from ..serializers.sign_in_serializer import SignInSerializer
 from ..serializers.sign_up_serializer import PatientSerializer, DoctorSerializer
 
 class PatientSignUpView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [AllowAny]  # No authentication required for signup
     
     @extend_schema(
         request=PatientSerializer,
@@ -28,19 +28,14 @@ class PatientSignUpView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             
-            # Generate JWT tokens
-            refresh = RefreshToken.for_user(user)
-            
             # Include tokens in response
             response_data = serializer.data
-            response_data['refresh'] = str(refresh)
-            response_data['access'] = str(refresh.access_token)
             
             return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DoctorSignUpView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [AllowAny]  # No authentication required for signup
     
     @extend_schema(
         request=DoctorSerializer,
