@@ -17,8 +17,8 @@ def get_db_connection():
             print(f"Connecting to {os.environ.get('ENDPOINT', 'DB_ENDPOINT not set')}")
             connection = pymysql.connect(
                 host=os.environ.get('ENDPOINT'),
-                user=os.environ.get('DB_USER'),
-                password=os.environ.get('DB_PASS'),
+                user=os.environ.get('USER'),
+                password=os.environ.get('PASS'),
                 connect_timeout=5
             )
             print(f"Connection successful to {os.environ.get('ENDPOINT')}")
