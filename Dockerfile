@@ -8,6 +8,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     libatlas-base-dev \
+    libssl-dev \
+    libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements.txt first to take advantage of Docker cache
@@ -15,6 +17,7 @@ COPY requirements.txt /app/
 
 # Install pip and upgrade it
 RUN python -m pip install --upgrade pip
+
 
 # Install the required Python packages from requirements.txt
 RUN pip install -r requirements.txt
