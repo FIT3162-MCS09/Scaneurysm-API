@@ -23,6 +23,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class PatientSerializer(serializers.ModelSerializer):
+    # Include the related user fields using the UserSerializer
+    user = UserSerializer(read_only=True)
+
     # Flatten the user fields
     username = serializers.CharField(write_only=True)
     email = serializers.EmailField(write_only=True)
@@ -32,7 +35,7 @@ class PatientSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Patient
-        fields = ['username', 'email', 'first_name', 'last_name', 'password', 
+        fields = ['user','username', 'email', 'first_name', 'last_name', 'password', 
                   'medical_record_number', 'birth_date', 'sex', 'primary_doctor']
     
     def create(self, validated_data):
@@ -57,6 +60,9 @@ class PatientSerializer(serializers.ModelSerializer):
 
 
 class DoctorSerializer(serializers.ModelSerializer):
+    # Include the related user fields using the UserSerializer
+    user = UserSerializer(read_only=True)
+
     # Flatten the user fields
     username = serializers.CharField(write_only=True)
     email = serializers.EmailField(write_only=True)
@@ -66,7 +72,7 @@ class DoctorSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Doctor
-        fields = ['username', 'email', 'first_name', 'last_name', 'password', 
+        fields = ['user','username', 'email', 'first_name', 'last_name', 'password', 
                   'license_number', 'specialty']
     
     def create(self, validated_data):
