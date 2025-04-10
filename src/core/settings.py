@@ -184,6 +184,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",  # Vue default port
     "http://127.0.0.1:3000",
     "http://127.0.0.1:8080",
+    'https://main.d1kbmfyaj1qcid.amplifyapp.com',
     # Add your production frontend URL when deploying
     # "https://your-frontend-domain.com",
 ]
