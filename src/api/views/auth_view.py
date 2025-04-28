@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.utils import timezone
 from datetime import timedelta
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework_simplejwt.tokens import RefreshToken
 
 # Fix import paths according to your project structure
@@ -19,8 +19,14 @@ class PatientSignUpView(APIView):
     @extend_schema(
         request=PatientSerializer,
         responses={
-            201: PatientSerializer,
-            400: 'Bad Request'
+            201: OpenApiResponse(
+                response=PatientSerializer,
+                description='Patient successfully created'
+            ),
+            400: OpenApiResponse(
+                description='Bad Request',
+                response={"type": "object", "properties": {"error": {"type": "string"}}}
+            )
         }
     )
     def post(self, request, *args, **kwargs):
@@ -40,8 +46,14 @@ class DoctorSignUpView(APIView):
     @extend_schema(
         request=DoctorSerializer,
         responses={
-            201: DoctorSerializer,
-            400: 'Bad Request'
+            201: OpenApiResponse(
+                response=DoctorSerializer,
+                description='Doctor successfully created'
+            ),
+            400: OpenApiResponse(
+                description='Bad Request',
+                response={"type": "object", "properties": {"error": {"type": "string"}}}
+            )
         }
     )
     def post(self, request, *args, **kwargs):
@@ -72,16 +84,28 @@ class SignInView(APIView):
     @extend_schema(
         request=SignInSerializer,
         responses={
-            200: {'type': 'object', 'properties': {
-                'refresh': {'type': 'string'},
-                'access': {'type': 'string'},
-                'user_id': {'type': 'string'},
-                'username': {'type': 'string'},
-                'email': {'type': 'string'},
-                'role': {'type': 'string'}
-            }},
-            400: 'Bad Request',
-            401: 'Unauthorized'
+            200: OpenApiResponse(
+                description='Successfully signed in',
+                response={
+                    "type": "object",
+                    "properties": {
+                        "refresh": {"type": "string"},
+                        "access": {"type": "string"},
+                        "user_id": {"type": "string"},
+                        "username": {"type": "string"},
+                        "email": {"type": "string"},
+                        "role": {"type": "string"}
+                    }
+                }
+            ),
+            400: OpenApiResponse(
+                description='Bad Request',
+                response={"type": "object", "properties": {"error": {"type": "string"}}}
+            ),
+            401: OpenApiResponse(
+                description='Unauthorized',
+                response={"type": "object", "properties": {"error": {"type": "string"}}}
+            )
         }
     )
     def post(self, request, *args, **kwargs):
@@ -134,9 +158,19 @@ class LogoutView(APIView):
     
     @extend_schema(
         responses={
-            200: {'type': 'object', 'properties': {
-                'message': {'type': 'string'}
-            }}
+            200: OpenApiResponse(
+                description='Successfully logged out',
+                response={
+                    "type": "object",
+                    "properties": {
+                        "message": {"type": "string"}
+                    }
+                }
+            ),
+            400: OpenApiResponse(
+                description='Logout failed',
+                response={"type": "object", "properties": {"error": {"type": "string"}}}
+            )
         }
     )
     def post(self, request):
