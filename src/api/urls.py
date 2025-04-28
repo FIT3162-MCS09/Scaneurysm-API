@@ -11,8 +11,10 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from .views.health_view import HealthView
-from .views.protected_view import ProfileView  # Assuming you implemented this
+from .views.protected_view import ProfileView
 from .views.search_view import PatientSearchView, UserSearchView, DoctorSearchView
+from .views.prediction_view import ImagePredictionView  # Add this import
+
 # Group URL patterns by feature/functionality
 urlpatterns = [
     # Authentication endpoints
@@ -34,6 +36,12 @@ urlpatterns = [
     path('files/', include([
         path('upload/', FileUploadView.as_view(), name='file-upload'),
         path('view/', UserFilesView.as_view(), name='user-files'),
+    ])),
+    
+    # # Analysis and prediction endpoints
+    path('analysis/', include([
+        path('predictions/create/', ImagePredictionView.as_view({'post': 'create_prediction'}), name='create-prediction'),
+        path('predictions/history/', ImagePredictionView.as_view({'get': 'get_history'}), name='prediction-history'),
     ])),
     
     # System endpoints

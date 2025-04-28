@@ -13,7 +13,7 @@ from models.doctor import Doctor
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema,OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 from rest_framework.permissions import AllowAny
 
 class PatientSearchView(APIView):
@@ -23,7 +23,13 @@ class PatientSearchView(APIView):
         parameters=[
             OpenApiParameter(name='user_id', description='ID of the user', required=True, type=str)
         ],
-        responses={200: PatientSerializer, 404: 'User not found'}
+        responses={
+            200: PatientSerializer,
+            404: OpenApiResponse(
+                description="Patient not found",
+                response={"type": "object", "properties": {"error": {"type": "string"}}}
+            )
+        }
     )
     def get(self, request, *args, **kwargs):
         user_id = request.query_params.get('user_id')
@@ -49,7 +55,13 @@ class DoctorSearchView(APIView):
         parameters=[
             OpenApiParameter(name='user_id', description='ID of the user', required=True, type=str)
         ],
-        responses={200: 'Success', 404: 'Doctor not found'}
+        responses={
+            200: DoctorSerializer,
+            404: OpenApiResponse(
+                description="Doctor not found",
+                response={"type": "object", "properties": {"error": {"type": "string"}}}
+            )
+        }
     )
     def get(self, request, *args, **kwargs):
         user_id = request.query_params.get('user_id')
@@ -77,7 +89,44 @@ class UserSearchView(APIView):
             OpenApiParameter(name='last_name', description='Last name of the user to search for', required=False, type=str),
             OpenApiParameter(name='email', description='Email of the user to search for', required=False, type=str),
         ],
-        responses={200: 'Success', 404: 'No users found'}
+        responses={
+            200: OpenApiResponse(
+                description="Successful search",
+                response={
+                    "type": "object",
+                    "properties": {
+                        "doctors": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {"type": "integer"},
+                                    "first_name": {"type": "string"},
+                                    "last_name": {"type": "string"},
+                                    "email": {"type": "string"}
+                                }
+                            }
+                        },
+                        "patients": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {"type": "integer"},
+                                    "first_name": {"type": "string"},
+                                    "last_name": {"type": "string"},
+                                    "email": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                }
+            ),
+            404: OpenApiResponse(
+                description="No users found",
+                response={"type": "object", "properties": {"error": {"type": "string"}}}
+            )
+        }
     )
     def get(self, request, *args, **kwargs):
         first_name = request.query_params.get('first_name')
