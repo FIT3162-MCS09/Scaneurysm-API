@@ -20,6 +20,16 @@ jobs:
       with:
         python-version: '3.9'
 
+    - name: Create and activate virtual environment
+      run: |
+        python -m venv .venv
+        echo "Created virtual environment"
+        source .venv/bin/activate
+        echo "Activated virtual environment"
+        # Make venv available to subsequent steps
+        echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+        echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -29,18 +39,21 @@ jobs:
 
     - name: Install dependencies
       run: |
+        source .venv/bin/activate
         python -m pip install --upgrade pip
-        # Install Zappa and its dependencies
+        # Install Zappa and its dependencies first
         pip install zappa==0.54.0 boto3==1.26.137 s3transfer==0.6.1
-        # Install project dependencies
+        # Then install project dependencies
         pip install -r requirements.txt
         # Verify installations
         echo "Python version:"
         python --version
         echo "Pip version:"
         pip --version
+        echo "Virtual env location:"
+        echo $VIRTUAL_ENV
         echo "Installed packages:"
-        pip list | grep zappa
+        pip list
 
     - name: Check if Lambda exists
       id: check_lambda
@@ -60,6 +73,8 @@ jobs:
         USER: ${{ secrets.DB_USERNAME }}
         PASS: ${{ secrets.DB_PASSWORD }}
       run: |
+        source .venv/bin/activate
+        
         # Check if bucket exists first, silently
         if ! aws s3api head-bucket --bucket zappa-mcs09-deployment 2>/dev/null; then
           echo "Creating S3 bucket..."
@@ -74,35 +89,17 @@ jobs:
         # Ensure we're in the correct directory
         cd $GITHUB_WORKSPACE
         
-        # Debug: Show current directory and contents
-        pwd
-        ls -la
+        # Show environment info
+        echo "Using Python from: $(which python)"
+        echo "Using Zappa from: $(which zappa)"
         
         if [ "${{ steps.check_lambda.outputs.exists }}" == "true" ]; then
           echo "Updating existing Lambda function..."
-          python -m zappa update production
+          $VIRTUAL_ENV/bin/zappa update production
         else
           echo "Deploying new Lambda function..."
-          python -m zappa deploy production
+          $VIRTUAL_ENV/bin/zappa deploy production
         fi
         
         echo "Deployment completed. Checking status..."
-        python -m zappa status production
-
-    - name: Debug Zappa Installation
-      if: failure()
-      run: |
-        echo "Python path:"
-        which python
-        echo "Python version:"
-        python --version
-        echo "Site packages location:"
-        python -c "import site; print(site.getsitepackages())"
-        echo "Zappa location:"
-        python -c "import zappa; print(zappa.__file__)"
-        echo "Current directory:"
-        pwd
-        echo "Directory contents:"
-        ls -la
-        echo "Python path:"
-        python -c "import sys; print('\n'.join(sys.path))"
+        $VIRTUAL_ENV/bin/zappa status production
