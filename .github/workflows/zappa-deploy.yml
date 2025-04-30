@@ -38,7 +38,28 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install zappa boto3==1.26.137 s3transfer==0.6.1
+        pip install zappa==0.54.0 boto3==1.26.137 s3transfer==0.6.1
+
+    - name: Verify Zappa settings file
+      run: |
+        # Show current directory contents
+        pwd
+        ls -la
+        
+        # Verify zappa_settings.json exists and is valid JSON
+        if [ ! -f zappa_settings.json ]; then
+          echo "Error: zappa_settings.json not found!"
+          exit 1
+        fi
+        
+        # Check file permissions
+        stat zappa_settings.json
+        
+        # Validate JSON syntax
+        python -c "import json; json.load(open('zappa_settings.json'))"
+        
+        # Show file contents
+        cat zappa_settings.json
 
     - name: Deploy with Zappa
       env:
@@ -54,5 +75,6 @@ jobs:
           --region ap-southeast-1 \
           --create-bucket-configuration LocationConstraint=ap-southeast-1 || true
         
-        # Deploy with zappa
-        zappa deploy production
+        # Deploy with explicit settings file path
+        cd $GITHUB_WORKSPACE
+        zappa deploy production --settings_file zappa_settings.json
