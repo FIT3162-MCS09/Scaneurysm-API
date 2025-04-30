@@ -37,8 +37,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        # Install Zappa and its dependencies first
         pip install zappa==0.54.0 boto3==1.26.137 s3transfer==0.6.1
+        # Then install project dependencies
+        pip install -r requirements.txt
+        # Verify Zappa installation
+        which zappa
+        zappa --version
+        pip list | grep zappa
 
     - name: Check if Lambda exists
       id: check_lambda
@@ -58,7 +64,16 @@ jobs:
         USER: ${{ secrets.DB_USERNAME }}
         PASS: ${{ secrets.DB_PASSWORD }}
       run: |
+        # Ensure we're in the virtual environment
         source venv/bin/activate
+        
+        # Debug info
+        echo "Python version:"
+        python --version
+        echo "Pip version:"
+        pip --version
+        echo "Installed packages:"
+        pip list
         
         # Check if bucket exists first, silently
         if ! aws s3api head-bucket --bucket zappa-mcs09-deployment 2>/dev/null; then
@@ -71,13 +86,16 @@ jobs:
           echo "S3 bucket already exists, continuing..."
         fi
         
+        # Ensure we're in the correct directory
+        cd $GITHUB_WORKSPACE
+        
         if [ "${{ steps.check_lambda.outputs.exists }}" == "true" ]; then
           echo "Updating existing Lambda function..."
-          python -m zappa update production -s "./zappa_settings.json"
+          zappa update production
         else
           echo "Deploying new Lambda function..."
-          python -m zappa deploy production -s "./zappa_settings.json"
+          zappa deploy production
         fi
         
         echo "Deployment completed. Checking status..."
-        python -m zappa status production -s "./zappa_settings.json"
+        zappa status production
