@@ -8,7 +8,7 @@
         "role_name": "ecsTaskExecutionRole",
         "role_arn": "arn:aws:iam::522814726499:role/ecsTaskExecutionRole",
         "django_settings": "src.core.settings",
-        "app_function": "src.core.wsgi.application",  
+        "app_function": "handler.handler",
         "memory_size": 1024,
         "aws_environment_variables": {
             "PYTHONPATH": "/var/task",  
