@@ -9,9 +9,9 @@
         "memory_size": 1024,
         "aws_environment_variables": {
             "PYTHONUNBUFFERED": "1",
-            "DB_ENDPOINT": "${ENDPOINT}",
-            "DB_USER": "${USER}",
-            "DB_PASS": "${PASS}",
+            "ENDPOINT": "${ENDPOINT}",
+            "USER": "${USER}",
+            "PASS": "${PASS}",
             "CUSTOM_AWS_KEY": "${AWS_ACCESS_KEY_ID}",
             "CUSTOM_AWS_SECRET": "${AWS_SECRET}",
             "DJANGO_ALLOWED_HOSTS": "*"

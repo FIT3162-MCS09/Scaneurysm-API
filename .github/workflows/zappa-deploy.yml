@@ -38,71 +38,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install zappa boto3==1.26.137 s3transfer==0.6.1
-
-    - name: Create Zappa settings
-      run: |
-        cat > zappa_settings.json << 'EOF'
-        {
-            "production": {
-                "aws_region": "ap-southeast-1",
-                "project_name": "mcs09",
-                "runtime": "python3.10",
-                "s3_bucket": "zappa-mcs09-deployment",
-                "manage_roles": true,
-                "django_settings": "src.settings",
-                "memory_size": 1024,
-                "aws_environment_variables": {
-                    "PYTHONUNBUFFERED": "1",
-                    "DB_ENDPOINT": "${ENDPOINT}",
-                    "DB_USER": "${USER}",
-                    "DB_PASS": "${PASS}",
-                    "CUSTOM_AWS_KEY": "${AWS_ACCESS_KEY_ID}",
-                    "CUSTOM_AWS_SECRET": "${AWS_SECRET}",
-                    "DJANGO_ALLOWED_HOSTS": "*"
-                },
-                "vpc_config": {
-                    "SubnetIds": [
-                        "subnet-0d17b66c7ae9d8937",
-                        "subnet-0e31ffa850804a597"
-                    ],
-                    "SecurityGroupIds": [
-                        "sg-0284d56d380b28b6a"
-                    ]
-                },
-                "lambda_description": "MCS09 Django Application",
-                "api_gateway_enabled": true,
-                "cors": true,
-                "binary_support": true,
-                "api_key_required": false,
-                "extra_permissions": [{
-                    "Effect": "Allow",
-                    "Action": ["lambda:InvokeFunction"],
-                    "Resource": "*"
-                }],
-                "apigateway_description": "MCS09 API Gateway",
-                "apigateway_policy": {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": "*",
-                            "Action": "execute-api:Invoke",
-                            "Resource": "execute-api:/*"
-                        }
-                    ]
-                }
-            }
-        }
-        EOF
-        cat zappa_settings.json
-
-    - name: Create S3 bucket
-      run: |
-        aws s3api create-bucket \
-          --bucket zappa-mcs09-deployment \
-          --region ap-southeast-1 \
-          --create-bucket-configuration LocationConstraint=ap-southeast-1 || true
+        pip install zappa==0.54.0 boto3==1.26.137 s3transfer==0.6.1
 
     - name: Deploy with Zappa
       env:
@@ -111,10 +47,20 @@ jobs:
         PASS: ${{ secrets.DB_PASSWORD }}
       run: |
         source venv/bin/activate
-        zappa deploy production -s zappa_settings.json
-
-    - name: Check Zappa status
-      if: success()
-      run: |
-        source venv/bin/activate
-        zappa status production -s zappa_settings.json
+        # First, verify zappa_settings.json exists and is valid
+        if [ ! -f zappa_settings.json ]; then
+          echo "zappa_settings.json not found!"
+          exit 1
+        fi
+        
+        # Try to parse the JSON to verify it's valid
+        python -c "import json; json.load(open('zappa_settings.json'))"
+        
+        # Create S3 bucket if it doesn't exist
+        aws s3api create-bucket \
+          --bucket zappa-mcs09-deployment \
+          --region ap-southeast-1 \
+          --create-bucket-configuration LocationConstraint=ap-southeast-1 || true
+        
+        # Deploy with zappa
+        zappa deploy production
