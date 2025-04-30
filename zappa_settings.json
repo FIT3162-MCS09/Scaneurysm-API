@@ -25,7 +25,30 @@
             "SecurityGroupIds": ["sg-0284d56d380b28b6a"]
         },
         "lambda_description": "MCS09 Django Application",
-        "log_level": "INFO",
-        "api_gateway_enabled": true
+        "api_gateway_enabled": true,
+        "cors": true,
+        "binary_support": true,
+        "api_key_required": false,
+        "environment_variables": {
+            "DJANGO_ALLOWED_HOSTS": "*"
+        },
+        "extra_permissions": [{
+            "Effect": "Allow",
+            "Action": ["lambda:InvokeFunction"],
+            "Resource": "*"
+        }],
+        "apigateway_description": "MCS09 API Gateway",
+        "apigateway_enabled": true,
+        "apigateway_policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "execute-api:Invoke",
+                    "Resource": "execute-api:/*"
+                }
+            ]
+        }
     }
 }
