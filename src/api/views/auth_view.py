@@ -10,8 +10,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 # Fix import paths according to your project structure
 from models.user import User  # Adjust if needed
 from models.user_session import UserSession  # Adjust if needed
-from ..serializers.sign_in_serializer import SignInSerializer
-from ..serializers.sign_up_serializer import PatientSerializer, DoctorSerializer
+from serializers.sign_in_serializer import SignInSerializer
+from serializers.sign_up_serializer import PatientSerializer, DoctorSerializer
 
 class PatientSignUpView(APIView):
     permission_classes = [AllowAny]  # No authentication required for signup

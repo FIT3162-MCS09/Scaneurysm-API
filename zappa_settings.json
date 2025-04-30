@@ -28,7 +28,7 @@
             "SecurityGroupIds": ["sg-0284d56d380b28b6a"]
         },
         "lambda_description": "MCS09 Django Application",
-        "log_level": "INFO",
+        "log_level": "DEBUG",
         "api_gateway_enabled": true,
         "slim_handler": false
     }

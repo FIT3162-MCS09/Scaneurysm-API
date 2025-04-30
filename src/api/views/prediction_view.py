@@ -8,8 +8,8 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from rest_framework.decorators import action
 from models.image_prediction import ImagePrediction
-from ..service.prediction_service import PredictionService
-from ..serializers.prediction_serializer import ImagePredictionSerializer
+from service.prediction_service import PredictionService
+from serializers.prediction_serializer import ImagePredictionSerializer
 
 
 class ImagePredictionView(viewsets.ViewSet):

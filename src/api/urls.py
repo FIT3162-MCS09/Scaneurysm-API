@@ -1,6 +1,6 @@
 from django.urls import path, include
-from .views.file_view import FileUploadView, UserFilesView
-from .views.auth_view import (
+from views.file_view import FileUploadView, UserFilesView
+from views.auth_view import (
     PatientSignUpView, 
     DoctorSignUpView, 
     SignInView,
@@ -10,10 +10,10 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from .views.health_view import HealthView
-from .views.protected_view import ProfileView
-from .views.search_view import PatientSearchView, UserSearchView, DoctorSearchView
-from .views.prediction_view import ImagePredictionView  # Add this import
+from views.health_view import HealthView
+from views.protected_view import ProfileView
+from views.search_view import PatientSearchView, UserSearchView, DoctorSearchView
+from views.prediction_view import ImagePredictionView  # Add this import
 
 # Group URL patterns by feature/functionality
 urlpatterns = [

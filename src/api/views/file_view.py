@@ -3,9 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
-from ..serializers.file_serializer import FileUploadSerializer
-from ..serializers import FileSerializer
-from ..service.upload_service import UploadService
+from serializers.file_serializer import FileUploadSerializer
+from serializers import FileSerializer
+from service.upload_service import UploadService
 from models.user import User
 from rest_framework import status
 from rest_framework.response import Response

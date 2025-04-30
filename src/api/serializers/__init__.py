@@ -1,1 +1,1 @@
-from .file_serializer import FileSerializer
+from serializers.file_serializer import FileSerializer
