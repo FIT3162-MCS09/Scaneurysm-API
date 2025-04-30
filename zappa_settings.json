@@ -2,7 +2,7 @@
     "production": {
         "aws_region": "ap-southeast-1",
         "project_name": "mcs09",
-        "runtime": "python3.10",
+        "runtime": "python3.9",
         "s3_bucket": "zappa-mcs09-deployment",
         "manage_roles": true,
         "django_settings": "src.settings",
