@@ -14,8 +14,8 @@
             "ENDPOINT": "${ENDPOINT}",
             "USER": "${USER}",
             "PASS": "${PASS}",
-            "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
-            "AWS_SECRET": "${AWS_SECRET}"
+            "CUSTOM_AWS_KEY": "${AWS_ACCESS_KEY_ID}",
+            "CUSTOM_AWS_SECRET": "${AWS_SECRET}"
         },
         "vpc_config": {
             "SubnetIds": [        
