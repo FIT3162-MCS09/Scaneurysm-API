@@ -1,5 +1,5 @@
 from django.db import models
-from .user import User
+from src.models.user import User
 class DoctorManager(models.Manager):
     def create_doctor(self, username, email, license_number, specialty, **extra_fields):
         user = User.objects.create_user(username, email, role='doctor', **extra_fields)

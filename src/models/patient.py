@@ -1,6 +1,6 @@
 from django.db import models
-from .user import User
-from .doctor import Doctor
+from src.models.user import User
+from src.models.doctor import Doctor
 class PatientManager(models.Manager):
     def create_patient(self, username, email, medical_record_number, **extra_fields):
         user = User.objects.create_user(username, email, role='patient', **extra_fields)

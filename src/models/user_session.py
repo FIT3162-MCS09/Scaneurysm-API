@@ -5,7 +5,7 @@ from rest_framework.authtoken.models import Token
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import uuid
-from .user import User
+from src.models.user import User
 
 class UserSession(models.Model):
     """Track user sessions for additional security"""

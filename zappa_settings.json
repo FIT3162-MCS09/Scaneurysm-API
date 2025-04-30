@@ -4,18 +4,21 @@
         "project_name": "mcs09",
         "runtime": "python3.9",
         "s3_bucket": "zappa-mcs09-deployment",
-        "manage_roles": true,
+        "manage_roles": false,
         "role_name": "ecsTaskExecutionRole",
         "role_arn": "arn:aws:iam::522814726499:role/ecsTaskExecutionRole",
-        "django_settings": "src.settings",
+        "django_settings": "src.core.settings",
+        "app_function": "src.core.wsgi.application",  
         "memory_size": 1024,
         "aws_environment_variables": {
+            "PYTHONPATH": "/var/task",  
+            "DJANGO_SETTINGS_MODULE": "src.core.settings",  
             "PYTHONUNBUFFERED": "1",
             "ENDPOINT": "${ENDPOINT}",
             "USER": "${USER}",
             "PASS": "${PASS}",
-            "CUSTOM_AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
-            "CUSTOM_AWS_SECRET": "${AWS_SECRET}"
+            "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
+            "AWS_SECRET": "${AWS_SECRET}"
         },
         "vpc_config": {
             "SubnetIds": [        
@@ -27,7 +30,6 @@
         "lambda_description": "MCS09 Django Application",
         "log_level": "INFO",
         "api_gateway_enabled": true,
-        "keep_warm": false, 
-        "slim_handler": false 
+        "slim_handler": false
     }
 }

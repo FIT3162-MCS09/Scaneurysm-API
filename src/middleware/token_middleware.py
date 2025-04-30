@@ -1,7 +1,7 @@
 from django.utils import timezone
 from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import AuthenticationFailed
-from ..models import UserSession
+from src.models import UserSession
 
 class TokenExpirationMiddleware:
     def __init__(self, get_response):

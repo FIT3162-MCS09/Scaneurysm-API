@@ -1,5 +1,5 @@
 from django.db import models
-from .user import User
+from src.models.user import User
 class Report(models.Model):
     user = models.ForeignKey(
                     User,

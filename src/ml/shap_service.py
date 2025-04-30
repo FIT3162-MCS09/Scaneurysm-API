@@ -1,7 +1,7 @@
 import shap
 import numpy as np
 from typing import Dict, Any, List, Union
-from .model_service import ModelService
+from src.ml.model_service import ModelService
 
 class ShapService:
     def __init__(self, model_service: ModelService):
