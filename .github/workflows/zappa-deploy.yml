@@ -45,15 +45,6 @@ jobs:
         pip install zappa==0.54.0 boto3==1.26.137 s3transfer==0.6.1
         # Then install project dependencies
         pip install -r requirements.txt
-        # Verify installations
-        echo "Python version:"
-        python --version
-        echo "Pip version:"
-        pip --version
-        echo "Virtual env location:"
-        echo $VIRTUAL_ENV
-        echo "Installed packages:"
-        pip list
 
     - name: Check if Lambda exists
       id: check_lambda
@@ -92,14 +83,16 @@ jobs:
         # Show environment info
         echo "Using Python from: $(which python)"
         echo "Using Zappa from: $(which zappa)"
+        echo "Current directory: $(pwd)"
+        echo "Settings file location: $(pwd)/zappa_settings.json"
         
         if [ "${{ steps.check_lambda.outputs.exists }}" == "true" ]; then
           echo "Updating existing Lambda function..."
-          $VIRTUAL_ENV/bin/zappa update production
+          $VIRTUAL_ENV/bin/zappa update production -s "$(pwd)/zappa_settings.json"
         else
           echo "Deploying new Lambda function..."
-          $VIRTUAL_ENV/bin/zappa deploy production
+          $VIRTUAL_ENV/bin/zappa deploy production -s "$(pwd)/zappa_settings.json"
         fi
         
         echo "Deployment completed. Checking status..."
-        $VIRTUAL_ENV/bin/zappa status production
+        $VIRTUAL_ENV/bin/zappa status production -s "$(pwd)/zappa_settings.json"
