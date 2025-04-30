@@ -13,3 +13,4 @@ djangorestframework-simplejwt==5.3.0
 django-cors-headers==4.3.1
 cryptography==42.0.2
 requests
+zappa
