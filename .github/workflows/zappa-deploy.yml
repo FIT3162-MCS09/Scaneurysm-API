@@ -38,7 +38,14 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install zappa boto3==1.26.137 s3transfer==0.6.1
+        pip install zappa boto3==1.26.137 s3transfer==0.6.1  werkzeug==2.3.7
+
+        # Create a directory for additional packages
+        mkdir -p package
+        pip install werkzeug -t package/
+        
+        # Copy the packages to the virtual environment site-packages
+        cp -r package/* venv/lib/python3.9/site-packages/
 
     - name: Get VPC Config
       id: vpc-config
@@ -71,20 +78,14 @@ jobs:
         # Ensure we're in the virtual environment
         source venv/bin/activate
         
-        # Try to undeploy first to clean up any existing deployment
-        zappa undeploy production -y || true
-        
         # Create S3 bucket if it doesn't exist
         aws s3api create-bucket \
           --bucket zappa-mcs09-deployment \
           --region ap-southeast-1 \
           --create-bucket-configuration LocationConstraint=ap-southeast-1 || true
         
-        # Clean up any existing API Gateways (optional, use carefully)
-        # aws apigateway get-rest-apis --query 'items[?name==`mcs09-production`].id' --output text | xargs -I {} aws apigateway delete-rest-api --rest-api-id {} || true
-        
-        # Deploy with Zappa
-        zappa deploy production
+        # Try to update first, if that fails (i.e., no existing deployment) then do initial deploy
+        zappa update production || zappa deploy production
 
     - name: Check Zappa status
       if: success()

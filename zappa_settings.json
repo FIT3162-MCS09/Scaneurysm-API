@@ -26,6 +26,8 @@
         },
         "lambda_description": "MCS09 Django Application",
         "log_level": "INFO",
-        "api_gateway_enabled": true
+        "api_gateway_enabled": true,
+        "keep_warm": false, 
+        "slim_handler": false 
     }
 }
