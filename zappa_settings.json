@@ -30,11 +30,13 @@
         "cors": true,
         "binary_support": true,
         "api_key_required": false,
-        "extra_permissions": [{
-            "Effect": "Allow",
-            "Action": ["lambda:InvokeFunction"],
-            "Resource": "*"
-        }],
+        "extra_permissions": [
+            {
+                "Effect": "Allow",
+                "Action": ["lambda:InvokeFunction"],
+                "Resource": "*"
+            }
+        ],
         "apigateway_description": "MCS09 API Gateway",
         "apigateway_policy": {
             "Version": "2012-10-17",
