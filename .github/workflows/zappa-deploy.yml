@@ -30,7 +30,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # Install Zappa and its dependencies globally
+        # Install Zappa and its dependencies
         pip install zappa==0.54.0 boto3==1.26.137 s3transfer==0.6.1
         # Install project dependencies
         pip install -r requirements.txt
@@ -40,11 +40,7 @@ jobs:
         echo "Pip version:"
         pip --version
         echo "Installed packages:"
-        pip list
-        echo "Zappa location:"
-        which zappa
-        echo "Zappa version:"
-        zappa --version
+        pip list | grep zappa
 
     - name: Check if Lambda exists
       id: check_lambda
@@ -84,11 +80,29 @@ jobs:
         
         if [ "${{ steps.check_lambda.outputs.exists }}" == "true" ]; then
           echo "Updating existing Lambda function..."
-          /usr/local/bin/zappa update production
+          python -m zappa update production
         else
           echo "Deploying new Lambda function..."
-          /usr/local/bin/zappa deploy production
+          python -m zappa deploy production
         fi
         
         echo "Deployment completed. Checking status..."
-        /usr/local/bin/zappa status production
+        python -m zappa status production
+
+    - name: Debug Zappa Installation
+      if: failure()
+      run: |
+        echo "Python path:"
+        which python
+        echo "Python version:"
+        python --version
+        echo "Site packages location:"
+        python -c "import site; print(site.getsitepackages())"
+        echo "Zappa location:"
+        python -c "import zappa; print(zappa.__file__)"
+        echo "Current directory:"
+        pwd
+        echo "Directory contents:"
+        ls -la
+        echo "Python path:"
+        python -c "import sys; print('\n'.join(sys.path))"
