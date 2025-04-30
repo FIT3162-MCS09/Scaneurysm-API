@@ -60,11 +60,16 @@ jobs:
       run: |
         source venv/bin/activate
         
-        # Create S3 bucket if it doesn't exist (ignore error if bucket exists)
-        aws s3api create-bucket \
-          --bucket zappa-mcs09-deployment \
-          --region ap-southeast-1 \
-          --create-bucket-configuration LocationConstraint=ap-southeast-1 || true
+        # Check if bucket exists first, silently
+        if ! aws s3api head-bucket --bucket zappa-mcs09-deployment 2>/dev/null; then
+          echo "Creating S3 bucket..."
+          aws s3api create-bucket \
+            --bucket zappa-mcs09-deployment \
+            --region ap-southeast-1 \
+            --create-bucket-configuration LocationConstraint=ap-southeast-1
+        else
+          echo "S3 bucket already exists, continuing..."
+        fi
         
         if [ "${{ steps.check_lambda.outputs.exists }}" == "true" ]; then
           echo "Updating existing Lambda function..."
@@ -74,5 +79,5 @@ jobs:
           python -m zappa deploy production -s "./zappa_settings.json"
         fi
         
-        # Show the status after deployment/update
+        echo "Deployment completed. Checking status..."
         python -m zappa status production -s "./zappa_settings.json"
