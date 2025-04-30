@@ -20,6 +20,13 @@ jobs:
       with:
         python-version: '3.10'
 
+    - name: Create and activate virtual environment
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+        echo "PATH=$VIRTUAL_ENV/bin:$PATH" >> $GITHUB_ENV
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -31,7 +38,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install zappa
+        pip install zappa boto3==1.26.137 s3transfer==0.6.1
 
     - name: Get VPC Config
       id: vpc-config
@@ -39,11 +46,10 @@ jobs:
         # Install AWS CLI
         pip install awscli
 
-        # Get VPC config from ECS and update zappa_settings.json
+        # Get network configuration from ECS
         CLUSTER="MCS09-cluster"
         SERVICE="mcs09-service"
         
-        # Get network configuration from ECS
         CONFIG=$(aws ecs describe-services --cluster $CLUSTER --services $SERVICE --query 'services[0].networkConfiguration.awsvpcConfiguration')
         
         # Extract subnets and security groups
@@ -62,12 +68,20 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET: ${{ secrets.AWS_SECRET }}
       run: |
+        # Ensure we're in the virtual environment
+        source venv/bin/activate
+        
         # Create S3 bucket if it doesn't exist
         aws s3api create-bucket \
           --bucket zappa-mcs09-deployment \
           --region ap-southeast-1 \
           --create-bucket-configuration LocationConstraint=ap-southeast-1 || true
         
-        # Deploy or update depending on if it exists
-        zappa status production || zappa deploy production
-        zappa update production || echo "First deployment required"
+        # First deploy
+        zappa deploy production
+
+    - name: Check Zappa status
+      if: success()
+      run: |
+        source venv/bin/activate
+        zappa status production

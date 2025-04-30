@@ -4,7 +4,7 @@
         "project_name": "mcs09",
         "runtime": "python3.10",
         "s3_bucket": "zappa-mcs09-deployment",
-        "manage_roles": false,
+        "manage_roles": true,
         "role_name": "ecsTaskExecutionRole",
         "role_arn": "arn:aws:iam::522814726499:role/ecsTaskExecutionRole",
         "django_settings": "src.settings",
