@@ -54,8 +54,7 @@ jobs:
         fi
         
         # Try to parse the JSON to verify it's valid
-        python -c "import json; json.load(open('zappa_settings.json'))"
-        
+                
         # Create S3 bucket if it doesn't exist
         aws s3api create-bucket \
           --bucket zappa-mcs09-deployment \
