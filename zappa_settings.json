@@ -5,49 +5,27 @@
         "runtime": "python3.9",
         "s3_bucket": "zappa-mcs09-deployment",
         "manage_roles": true,
-        "django_settings": "src.settings",
+        "role_name": "ecsTaskExecutionRole",
+        "role_arn": "arn:aws:iam::522814726499:role/ecsTaskExecutionRole",
+        "django_settings": "src.core.settings",
         "memory_size": 1024,
         "aws_environment_variables": {
             "PYTHONUNBUFFERED": "1",
             "ENDPOINT": "${ENDPOINT}",
             "USER": "${USER}",
             "PASS": "${PASS}",
-            "CUSTOM_AWS_KEY": "${AWS_ACCESS_KEY_ID}",
-            "CUSTOM_AWS_SECRET": "${AWS_SECRET}",
-            "DJANGO_ALLOWED_HOSTS": "*"
+            "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
+            "AWS_SECRET": "${AWS_SECRET}"
         },
         "vpc_config": {
-            "SubnetIds": [
-                "subnet-0d17b66c7ae9d8937",
-                "subnet-0e31ffa850804a597"
-            ],
-            "SecurityGroupIds": [
-                "sg-0284d56d380b28b6a"
-            ]
+            "SubnetIds": [        
+            "subnet-0d17b66c7ae9d8937",
+            "subnet-0e31ffa850804a597"
+        ], 
+            "SecurityGroupIds": ["sg-0284d56d380b28b6a"]
         },
         "lambda_description": "MCS09 Django Application",
-        "api_gateway_enabled": true,
-        "cors": true,
-        "binary_support": true,
-        "api_key_required": false,
-        "extra_permissions": [
-            {
-                "Effect": "Allow",
-                "Action": ["lambda:InvokeFunction"],
-                "Resource": "*"
-            }
-        ],
-        "apigateway_description": "MCS09 API Gateway",
-        "apigateway_policy": {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Principal": "*",
-                    "Action": "execute-api:Invoke",
-                    "Resource": "execute-api:/*"
-                }
-            ]
-        }
+        "log_level": "INFO",
+        "api_gateway_enabled": true
     }
 }
