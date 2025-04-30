@@ -38,7 +38,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install zappa==0.54.0 boto3==1.26.137 s3transfer==0.6.1
+        pip install zappa boto3==1.26.137 s3transfer==0.6.1
 
     - name: Deploy with Zappa
       env:
@@ -47,14 +47,7 @@ jobs:
         PASS: ${{ secrets.DB_PASSWORD }}
       run: |
         source venv/bin/activate
-        # First, verify zappa_settings.json exists and is valid
-        if [ ! -f zappa_settings.json ]; then
-          echo "zappa_settings.json not found!"
-          exit 1
-        fi
         
-        # Try to parse the JSON to verify it's valid
-                
         # Create S3 bucket if it doesn't exist
         aws s3api create-bucket \
           --bucket zappa-mcs09-deployment \
