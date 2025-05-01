@@ -3,8 +3,14 @@ import json
 from models.image_prediction import ImagePrediction
 from django.conf import settings
 from functools import lru_cache
+from ml.shap_service import ShapAnalysisService
+
 
 class PredictionService:
+
+    def __init__(self):
+        self.shap_service = None
+
     @lru_cache(maxsize=1)
     def get_runtime_client(self):
         """
@@ -60,13 +66,14 @@ class PredictionService:
         except Exception as e:
             raise Exception(f"Error invoking SageMaker endpoint: {str(e)}")
 
-    def create_prediction(self, user, image_url):
+    def create_prediction(self, user, image_url, include_shap=False):
         """
-        Create and save prediction record
+        Create and save prediction record with optional SHAP analysis
         
         Args:
             user: User instance
             image_url: URL of the image to predict
+            include_shap: Boolean to determine if SHAP analysis should be included
             
         Returns:
             ImagePrediction: Created prediction record
@@ -78,11 +85,28 @@ class PredictionService:
             # Get prediction from SageMaker endpoint
             prediction_result = self.invoke_endpoint(image_url)
             
+            # Perform SHAP analysis if requested
+            shap_analysis = None
+            if include_shap:
+                self.shap_service = ShapAnalysisService()
+                shap_analysis = self.shap_service.analyze_image(
+                    image_url=image_url,
+                    user_id=str(user.id)  # Convert user.id to string for S3 key
+                )
+                if 'error' in shap_analysis:
+                    raise Exception(f"SHAP analysis failed: {shap_analysis['error']}")
+                
+                # Combine the results
+                prediction_result = {
+                    'sagemaker_prediction': prediction_result,
+                }
+            
             # Create and save prediction record
             prediction = ImagePrediction.objects.create(
                 user=user,
                 image_url=image_url,
-                prediction=prediction_result
+                prediction=prediction_result,
+                shap_explanation=shap_analysis
             )
             return prediction
         except Exception as e:

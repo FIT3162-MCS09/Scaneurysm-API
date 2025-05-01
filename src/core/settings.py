@@ -1,5 +1,8 @@
+from datetime import timedelta
 from pathlib import Path
 import os
+
+from django.conf import settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,11 +25,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'drf_spectacular',
-    'api',
-    'ml',
     'models',
     'middleware',
     'corsheaders',
+    'ml.apps.MLConfig',
+    # 'ml',
 ]
 
 MIDDLEWARE = [
@@ -135,45 +138,34 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
+            'format': '[{asctime}] {levelname} {name} {message}',
             'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
         },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
-            'level': 'WARNING',  # Only warnings and above for console
         },
         'file': {
-            'class': 'logging.handlers.RotatingFileHandler',  # Use rotating file handler
-            'filename': 'django-debug.log',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'debug.log',
             'formatter': 'verbose',
-            'level': 'INFO',
-            'maxBytes': 10485760,  # 10MB
-            'backupCount': 3,      # Keep 3 backup files
+            'maxBytes': 1024*1024*5,  # 5 MB
+            'backupCount': 5,
         },
     },
     'loggers': {
-        '': {  # Root logger
+        'api.service.prediction_service': {  # Logger for your prediction service
             'handlers': ['console', 'file'],
-            'level': 'WARNING',  # Higher level for root logger
+            'level': 'DEBUG',
             'propagate': True,
         },
-        'django': {  # Django logger
-            'handlers': ['file'],
-            'level': 'WARNING',  # Only warnings and above
-            'propagate': False,
-        },
-        'django.request': {  # Request logger for errors
+        'django': {
             'handlers': ['console', 'file'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        'your_app_name': {  # Your specific app logs
-            'handlers': ['console', 'file'],
-            'level': 'INFO',  # More detailed for your app specifically
-            'propagate': False,
+            'level': 'INFO',
+            'propagate': True,
         },
     },
 }
@@ -193,3 +185,48 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 AUTH_USER_MODEL = 'models.User'
+
+ASGI_APPLICATION = 'config.asgi.application'
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "UPDATE_LAST_LOGIN": False,
+
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": settings.SECRET_KEY,
+    "VERIFYING_KEY": "",
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JSON_ENCODER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+
+    "JTI_CLAIM": "jti",
+
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
+
+    "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
+    "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
+    "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
+    "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
+    "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
+    "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
+}
+
+default_app_config = 'ml.apps.MLConfig'
