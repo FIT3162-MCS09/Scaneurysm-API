@@ -18,7 +18,7 @@ class ImagePrediction(models.Model):
         db_table = 'image_prediction'
 
     def __str__(self):
-        return self.name
+        return f"Prediction for {self.user.username} at {self.created_at}"
         
     def save(self, *args, **kwargs):
         if not self.created_by:
