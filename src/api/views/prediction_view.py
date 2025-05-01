@@ -39,11 +39,14 @@ class ImagePredictionView(viewsets.ViewSet):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             prediction = self.prediction_service.create_prediction(
-                user=serializer.validated_data['user'],  # Use user from serializer
-                image_url=serializer.validated_data['image_url']
+                user=serializer.validated_data['user'],
+                image_url=serializer.validated_data['image_url'],
+                include_shap=serializer.validated_data.get('include_shap', False)
             )
 
-            return Response(ImagePredictionSerializer(prediction).data)
+            # Create a new serializer instance with the prediction object
+            response_serializer = ImagePredictionSerializer(prediction)
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({
