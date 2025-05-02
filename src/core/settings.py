@@ -28,8 +28,9 @@ INSTALLED_APPS = [
     'models',
     'middleware',
     'corsheaders',
-    'ml.apps.MLConfig',
+    # 'ml.apps.MLConfig',
     # 'ml',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -229,4 +230,3 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
-default_app_config = 'ml.apps.MLConfig'
