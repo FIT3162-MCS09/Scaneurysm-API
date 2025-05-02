@@ -1,6 +1,5 @@
 from django.urls import path, include
 
-from .views.shap_analysis_view import ShapAnalysisView
 from .views.file_view import FileUploadView, UserFilesView
 from .views.auth_view import (
     PatientSignUpView, 
@@ -56,6 +55,5 @@ urlpatterns = [
         path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     ])),
 
-    path('shap-analysis/', ShapAnalysisView.as_view(), name='shap_analysis'),
 
 ]

@@ -23,6 +23,10 @@
         },
         "lambda_handler": "lambda_function.lambda_handler",
         "log_level": "INFO",
-        "api_gateway_enabled": true
+        "api_gateway_enabled": true,
+        "docker_image": "ml-lambda:latest",
+        "use_docker": true,
+        "docker_executable": "docker",
+        "keep_warm": false
     }
 }

@@ -3,7 +3,6 @@ import json
 from models.image_prediction import ImagePrediction
 from django.conf import settings
 from functools import lru_cache
-from ml.shap_service import ShapAnalysisService
 
 
 class PredictionService:
@@ -86,27 +85,27 @@ class PredictionService:
             prediction_result = self.invoke_endpoint(image_url)
             
             # Perform SHAP analysis if requested
-            shap_analysis = None
-            if include_shap:
-                self.shap_service = ShapAnalysisService()
-                shap_analysis = self.shap_service.analyze_image(
-                    image_url=image_url,
-                    user_id=str(user.id)  # Convert user.id to string for S3 key
-                )
-                if 'error' in shap_analysis:
-                    raise Exception(f"SHAP analysis failed: {shap_analysis['error']}")
+            # shap_analysis = None
+            # if include_shap:
+            #     self.shap_service = ShapAnalysisService()
+            #     shap_analysis = self.shap_service.analyze_image(
+            #         image_url=image_url,
+            #         user_id=str(user.id)  # Convert user.id to string for S3 key
+            #     )
+            #     if 'error' in shap_analysis:
+            #         raise Exception(f"SHAP analysis failed: {shap_analysis['error']}")
                 
-                # Combine the results
-                prediction_result = {
-                    'sagemaker_prediction': prediction_result,
-                }
+            #     # Combine the results
+            #     prediction_result = {
+            #         'sagemaker_prediction': prediction_result,
+            #     }
             
             # Create and save prediction record
             prediction = ImagePrediction.objects.create(
                 user=user,
                 image_url=image_url,
                 prediction=prediction_result,
-                shap_explanation=shap_analysis
+                # shap_explanation=shap_analysis
             )
             return prediction
         except Exception as e:

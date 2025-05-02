@@ -11,9 +11,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import boto3
 from botocore.exceptions import ClientError
-import gc
 import os
-from .model_service import CNNModel
+from model_service import CNNModel
 
 class ShapAnalysisService:
     def __init__(self):
@@ -25,7 +24,6 @@ class ShapAnalysisService:
         self.s3_client = boto3.client('s3')
         self.model_bucket = 'pytorch-model-mcs09'
         self.output_bucket = 'mcs09-bucket'
-        gc.enable()
         
         # Download model from S3 to Lambda's temporary storage
         model_path = '/tmp/model.pth'

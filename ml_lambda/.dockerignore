@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+.pytest_cache
+.coverage
+htmlcov
+.git
+.gitignore
+README.md
+venv
+*.pth
