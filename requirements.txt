@@ -1,5 +1,5 @@
 # Existing packages
-Django==4.2.10
+Django==4.2.20
 djangorestframework==3.14.0
 joblib==1.3.2
 drf-spectacular==0.26.5
