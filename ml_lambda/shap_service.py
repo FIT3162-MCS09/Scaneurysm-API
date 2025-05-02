@@ -12,10 +12,18 @@ import seaborn as sns
 import boto3
 from botocore.exceptions import ClientError
 import os
+# Set matplotlib to use /tmp directory
+os.environ['MPLCONFIGDIR'] = '/tmp'
+# Set other temp directories
+os.environ['TMPDIR'] = '/tmp'
+os.environ['HOME'] = '/tmp'
+
 from model_service import CNNModel
 
 class ShapAnalysisService:
     def __init__(self):
+        import matplotlib
+        matplotlib.use('Agg')
         # Force CPU for Lambda
         self.device = torch.device('cpu')
         self.model = CNNModel().to(self.device)
@@ -57,12 +65,12 @@ class ShapAnalysisService:
         try:
             key = f'explain/{user_id}/{image_name}'
             self.s3_client.put_object(
-                Bucket=self.bucket_name,
+                Bucket=self.output_bucket,
                 Key=key,
                 Body=image_data,
                 ContentType='image/png'
             )
-            return f"https://{self.bucket_name}.s3.amazonaws.com/{key}"
+            return f"https://{self.output_bucket}.s3.amazonaws.com/{key}"
         except ClientError as e:
             print(f"Error saving to S3: {str(e)}")
             return None

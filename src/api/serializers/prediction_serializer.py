@@ -8,5 +8,5 @@ class ImagePredictionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ImagePrediction
-        fields = ['id', 'user', 'image_url', 'prediction', 'created_at', 'include_shap', 'shap_explanation']
-        read_only_fields = ['id', 'prediction', 'created_at', 'shap_explanation']
+        fields = ['id', 'user', 'image_url', 'prediction', 'created_at', 'include_shap']
+        read_only_fields = ['id', 'prediction', 'created_at']

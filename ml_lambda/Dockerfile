@@ -11,9 +11,9 @@ RUN yum update -y && \
     rm -rf /var/cache/yum
 
 # Create and set permissions for tmp directories
-RUN mkdir -p /tmp/.cache /tmp/model && \
-    chmod 777 /tmp/.cache && \
-    chmod 777 /tmp/model
+RUN mkdir -p /tmp/.cache/torch /tmp/.cache/matplotlib /tmp/model && \
+    chmod -R 777 /tmp/.cache && \
+    chmod -R 777 /tmp/model
 
 # Copy only necessary files
 COPY requirements.txt ${LAMBDA_TASK_ROOT}

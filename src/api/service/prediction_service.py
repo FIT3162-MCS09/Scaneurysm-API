@@ -85,27 +85,44 @@ class PredictionService:
             prediction_result = self.invoke_endpoint(image_url)
             
             # Perform SHAP analysis if requested
-            # shap_analysis = None
-            # if include_shap:
-            #     self.shap_service = ShapAnalysisService()
-            #     shap_analysis = self.shap_service.analyze_image(
-            #         image_url=image_url,
-            #         user_id=str(user.id)  # Convert user.id to string for S3 key
-            #     )
-            #     if 'error' in shap_analysis:
-            #         raise Exception(f"SHAP analysis failed: {shap_analysis['error']}")
-                
-            #     # Combine the results
-            #     prediction_result = {
-            #         'sagemaker_prediction': prediction_result,
-            #     }
+            shap_analysis = None
+            if include_shap:
+                try:
+                    # Initialize Lambda client
+                    lambda_client = boto3.client('lambda', region_name='ap-southeast-1')
+                    
+                    # Prepare event for Lambda
+                    lambda_event = {
+                        "body": {
+                            "image_url": image_url,
+                            "user_id": str(user.id)
+                        }
+                    }
+                    
+                    # Invoke Lambda function
+                    lambda_response = lambda_client.invoke(
+                        FunctionName='shap-analysis',
+                        InvocationType='RequestResponse',
+                        Payload=json.dumps(lambda_event)
+                    )
+                    
+                    # Parse Lambda response
+                    lambda_payload = json.loads(lambda_response['Payload'].read())
+                    shap_analysis = json.loads(lambda_payload['body'])
+                    
+                    # Combine the results
+                    prediction_result = {
+                        'sagemaker_prediction': prediction_result,
+                        'shap_analysis': shap_analysis
+                    }
+                except Exception as e:
+                    raise Exception(f"Error performing SHAP analysis: {str(e)}")
             
             # Create and save prediction record
             prediction = ImagePrediction.objects.create(
                 user=user,
                 image_url=image_url,
-                prediction=prediction_result,
-                # shap_explanation=shap_analysis
+                prediction=prediction_result
             )
             return prediction
         except Exception as e:
