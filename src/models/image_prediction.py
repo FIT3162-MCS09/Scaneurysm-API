@@ -10,6 +10,7 @@ class ImagePrediction(models.Model):
     image_url = models.URLField()
     prediction = models.JSONField(null=True)
     shap_explanation = models.JSONField(null=True)
+    request_id = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.CharField(max_length=100)
     

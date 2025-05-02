@@ -64,9 +64,9 @@ if aws lambda get-function --function-name ${FUNCTION_NAME} &> /dev/null; then
     # Update function configuration
     aws lambda update-function-configuration \
         --function-name ${FUNCTION_NAME} \
-        --memory-size 2048 \
+        --memory-size 3072 \
         --timeout 900 \
-        --environment "Variables={PYTHONUNBUFFERED=1,MPLCONFIGDIR=/tmp}"
+                --environment "Variables={PYTHONUNBUFFERED=1,MPLCONFIGDIR=/tmp,RESULTS_BUCKET=mcs09-bucket}"
 else
     echo "🆕 Creating new Lambda function..."
     aws lambda create-function \
@@ -74,9 +74,9 @@ else
         --package-type Image \
         --code ImageUri=${ECR_REPO_URI}:latest \
         --role ${ROLE_ARN} \
-        --memory-size 2048 \
+        --memory-size 3072 \
         --timeout 900 \
-        --environment "Variables={PYTHONUNBUFFERED=1,MPLCONFIGDIR=/tmp}"
+                --environment "Variables={PYTHONUNBUFFERED=1,MPLCONFIGDIR=/tmp,RESULTS_BUCKET=mcs09-bucket}"
 fi
 
 # Add function URL (if needed)

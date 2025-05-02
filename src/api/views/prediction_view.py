@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 
 from rest_framework.decorators import action
 from models.image_prediction import ImagePrediction
@@ -14,7 +14,7 @@ from ..serializers.prediction_serializer import ImagePredictionSerializer
 
 class ImagePredictionView(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
-    serializer_class = ImagePredictionSerializer
+    # serializer_class = ImagePredictionSerializer
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -108,3 +108,46 @@ class ImagePredictionView(viewsets.ViewSet):
             return Response({
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name='user_id', description='ID of the user', required=True, type=str),
+            OpenApiParameter(name='request_id', description='ID of the request', required=True, type=str)
+        ],
+        responses={
+            200: 'Good Request',
+            400: 'Bad Request'
+        }
+    )
+    def check_shap_status(self, request):
+        """
+        Check the status of a prediction analysis
+        """
+        try:
+            request_id = request.query_params.get('request_id')
+            user_id = request.query_params.get('user_id')
+            if not request_id and user_id:
+                return Response(
+                    {'error': 'request_id and user_id are required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            status_result = self.prediction_service.check_shap_analysis_status(
+                request_id=request_id,
+                user_id=user_id
+            )
+
+            if status_result.get('status') == 'error':
+                return Response(
+                    status_result,
+                    status=status.HTTP_404_NOT_FOUND if 'not found' in status_result.get('error', '') 
+                    else status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            return Response(status_result)
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

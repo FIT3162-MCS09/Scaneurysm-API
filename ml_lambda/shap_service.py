@@ -58,12 +58,24 @@ class ShapAnalysisService:
         if os.path.exists(model_path):
             os.remove(model_path)
 
-    def save_to_s3(self, image_data, user_id, image_name):
+    def save_to_s3(self, image_data, user_id, image_name, request_id=None):
         """
-        Save image to S3 bucket
+        Save image to S3 bucket under the request path structure
+        
+        Args:
+            image_data: The image data to save
+            user_id: The user's ID
+            image_name: Name of the image file
+            request_id: Optional request ID for organizing files
         """
         try:
-            key = f'explain/{user_id}/{image_name}'
+            # If request_id is provided, use the requests path structure
+            if request_id:
+                key = f'requests/{user_id}/{request_id}/images/{image_name}'
+            else:
+                # Fallback to original path if no request_id
+                key = f'explain/{user_id}/{image_name}'
+
             self.s3_client.put_object(
                 Bucket=self.output_bucket,
                 Key=key,
@@ -75,7 +87,7 @@ class ShapAnalysisService:
             print(f"Error saving to S3: {str(e)}")
             return None
 
-    def analyze_image(self, image_url, user_id):
+    def analyze_image(self, image_url, user_id, request_id):
         try:
             start_time = datetime.utcnow()
             print(f"Analysis started at {start_time.strftime('%Y-%m-%d %H:%M:%S')} UTC")
@@ -174,7 +186,7 @@ class ShapAnalysisService:
             image_name = f'shap_analysis_{timestamp}.png'
             
             # Save to S3 and get URL
-            s3_url = self.save_to_s3(buf, user_id, image_name)
+            s3_url = self.save_to_s3(buf, user_id, image_name, request_id)
             plt.close()
 
             # Quadrant analysis
@@ -217,7 +229,8 @@ class ShapAnalysisService:
             },
             'visualization': {
                 'url': s3_url
-            }
+            },
+            'request_id': request_id
         }
 
         except Exception as e:
