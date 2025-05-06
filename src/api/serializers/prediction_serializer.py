@@ -5,6 +5,7 @@ from models.user import User
 class ImagePredictionSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     include_shap = serializers.BooleanField(default=False, write_only=True)
+    image_url = serializers.URLField(max_length=2000)  # Add max_length validation
 
     class Meta:
         model = ImagePrediction

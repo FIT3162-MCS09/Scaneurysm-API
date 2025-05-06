@@ -7,7 +7,7 @@ class ImagePrediction(models.Model):
         on_delete=models.CASCADE,
         related_name='image_predictions'
     )
-    image_url = models.URLField()
+    image_url = models.URLField(max_length=2000)
     prediction = models.JSONField(null=True)
     shap_explanation = models.JSONField(null=True)
     request_id = models.CharField(max_length=255, null=True, blank=True)
