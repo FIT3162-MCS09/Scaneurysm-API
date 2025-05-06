@@ -92,20 +92,6 @@ class PredictionService:
             )
             
             
-            # Create a new ImagePrediction record for this SHAP analysis request
-            prediction = ImagePrediction.objects.create(
-                user_id=user_id,
-                image_url=image_url,
-                request_id=request_id,
-                prediction={
-                    'shap_analysis': {
-                        'status': 'processing',
-                        'request_id': request_id,
-                        'timestamp': datetime.utcnow().isoformat()
-                    }
-                }
-            )
-            
             return {
                 'status': 'processing',
                 'request_id': request_id,
@@ -222,7 +208,7 @@ class PredictionService:
             # If SHAP analysis is requested, initiate it
             if include_shap:
                 shap_request = self.perform_shap_analysis(image_url, user.id)
-                prediction_data['shap_analysis'] = shap_request
+                prediction.shap_explanation = shap_request
                 prediction.prediction = prediction_data
                 prediction.save()
             
