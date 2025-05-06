@@ -125,21 +125,12 @@ class PredictionService:
                     )
                     result_data = json.loads(result['Body'].read().decode('utf-8'))
                     
-                    # Update both the prediction JSON and the dedicated shap_explanation column
-                    prediction_data = prediction.prediction or {}
-                    prediction_data['shap_analysis'] = {
-                        'status': 'completed',
-                        'completion_time': datetime.utcnow().isoformat(),
-                        'result': result_data
-                    }
-                    
-                    prediction.prediction = prediction_data
-                    prediction.shap_explanation = result_data  # Store in dedicated column
+                    # Only update the shap_explanation column
+                    prediction.shap_explanation = result_data
                     prediction.save()
                     
                     return {
-                        'status': 'completed',
-                        'result': result_data
+                        'status': 'completed'
                     }
                     
                 except s3_client.exceptions.NoSuchKey:
@@ -152,14 +143,14 @@ class PredictionService:
                         error_data = json.loads(error['Body'].read().decode('utf-8'))
                         
                         # Update prediction with error status
-                        prediction_data = prediction.prediction or {}
-                        prediction_data['shap_analysis'] = {
+                        shap_column = prediction.prediction or {}
+                        shap_column['shap_analysis'] = {
                             'status': 'failed',
                             'error': error_data,
                             'completion_time': datetime.utcnow().isoformat()
                         }
                         
-                        prediction.prediction = prediction_data
+                        prediction.prediction = shap_column
                         prediction.save()
                         
                         return {
@@ -194,22 +185,20 @@ class PredictionService:
             prediction_result = self.invoke_endpoint(image_url)
             
             prediction_data = {
-                'prediction': prediction_result
+                'user': user,
+                'image_url': image_url,
+                'prediction': prediction_result,
+                'shap_explanation': None
             }
             
-            # Create prediction record with initial empty shap_explanation
-            prediction = ImagePrediction.objects.create(
-                user=user,
-                image_url=image_url,
-                prediction=prediction_data,
-                shap_explanation=None  # Initialize empty shap_explanation
-            )
+            # Create prediction record
+            prediction = ImagePrediction.objects.create(**prediction_data)
             
-            # If SHAP analysis is requested, initiate it
+            # If SHAP analysis is requested, initiate it and update record
             if include_shap:
                 shap_request = self.perform_shap_analysis(image_url, user.id)
                 prediction.shap_explanation = shap_request
-                prediction.prediction = prediction_data
+                prediction.request_id = prediction.shap_explanation.get("request_id")
                 prediction.save()
             
             return prediction
@@ -220,35 +209,39 @@ class PredictionService:
 
     def get_user_predictions(self, user):
         """
-        Get prediction history for a user and update any processing SHAP analyses
+        Get prediction history for a user and return list of SHAP analysis statuses
+        Returns: List of status dictionaries for predictions with SHAP analyses
         """
         try:
             predictions = ImagePrediction.objects.filter(
                 user=user
             ).order_by('-created_at')
-            
-            # Check and update status for predictions with processing SHAP analyses
+
+            status_results = []
+
+            # Check and collect status for predictions with processing SHAP analyses
             for prediction in predictions:
-                prediction_data = prediction.prediction or {}
-                shap_analysis = prediction_data.get('shap_analysis', {})
-                
-                # Check if SHAP analysis is in processing state
-                if (shap_analysis.get('status') == 'processing' and 
-                    'request_id' in shap_analysis):
-                    # Update status
-                    status = self.check_shap_analysis_status(
-                        shap_analysis['request_id'], 
-                        user.id
-                    )
-                    # Status update is handled within check_shap_analysis_status
-                    # No need to manually update here as it's already saved to database
-                    
-            # Refresh queryset to get updated data
-            predictions = ImagePrediction.objects.filter(
-                user=user
-            ).order_by('-created_at')
-            
-            return predictions
-            
+                try:
+                    shap_column = prediction.shap_explanation
+                    if shap_column and isinstance(shap_column, dict):
+                        status = shap_column.get('status')
+                        request_id = shap_column.get('request_id')
+                        # Check if SHAP analysis exists
+                        if request_id:
+                            # Get current status
+                            current_status = self.check_shap_analysis_status(
+                                request_id, 
+                                user.id
+                            )
+                            # Add prediction ID to status result
+                            current_status['prediction_id'] = prediction.id
+                            status_results.append(current_status)
+                            
+                except Exception as e:
+                    print(f"Error processing prediction {prediction.id}: {str(e)}")
+                    continue
+
+            return status_results
+
         except Exception as e:
             raise Exception(f"Error fetching predictions: {str(e)}")

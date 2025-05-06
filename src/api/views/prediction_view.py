@@ -140,11 +140,11 @@ class ImagePredictionView(viewsets.ViewSet):
                 user = user_id
 
             # Get predictions and update SHAP statuses
-            predictions = self.prediction_service.get_user_predictions(user)
+            # predictions = self.prediction_service.get_user_predictions(user)
             
-            # Serialize and return updated predictions
-            serializer = ImagePredictionSerializer(predictions, many=True)
-            return Response(serializer.data)
+            status_results = self.prediction_service.get_user_predictions(user)
+
+            return Response(status_results)
 
         except Exception as e:
             return Response({
