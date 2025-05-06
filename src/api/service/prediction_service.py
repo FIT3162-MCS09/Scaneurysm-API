@@ -127,13 +127,11 @@ class PredictionService:
         try:
             s3_client = boto3.client('s3')
             bucket = 'mcs09-bucket'
-            # Find the prediction with matching request_id and user_id
             try:
                 prediction = ImagePrediction.objects.get(
-                    request_id=request_id  # Remove user_id from query since it's in the UUID
+                    request_id=request_id
                 )
                 
-                # Check for result.json using the correct path structure
                 try:
                     result = s3_client.get_object(
                         Bucket=bucket,
@@ -141,7 +139,7 @@ class PredictionService:
                     )
                     result_data = json.loads(result['Body'].read().decode('utf-8'))
                     
-                    # Update the prediction with SHAP results
+                    # Update both the prediction JSON and the dedicated shap_explanation column
                     prediction_data = prediction.prediction or {}
                     prediction_data['shap_analysis'] = {
                         'status': 'completed',
@@ -150,7 +148,7 @@ class PredictionService:
                     }
                     
                     prediction.prediction = prediction_data
-                    prediction.shap_explanation = result_data
+                    prediction.shap_explanation = result_data  # Store in dedicated column
                     prediction.save()
                     
                     return {
@@ -207,39 +205,64 @@ class PredictionService:
         Create and save prediction record with optional async SHAP analysis
         """
         try:
-            # Get prediction from SageMaker endpoint
             prediction_result = self.invoke_endpoint(image_url)
             
-            # Initialize prediction data
             prediction_data = {
-                'sagemaker_prediction': prediction_result
+                'prediction': prediction_result
             }
+            
+            # Create prediction record with initial empty shap_explanation
+            prediction = ImagePrediction.objects.create(
+                user=user,
+                image_url=image_url,
+                prediction=prediction_data,
+                shap_explanation=None  # Initialize empty shap_explanation
+            )
             
             # If SHAP analysis is requested, initiate it
             if include_shap:
                 shap_request = self.perform_shap_analysis(image_url, user.id)
                 prediction_data['shap_analysis'] = shap_request
-            
-            # Create and save prediction record
-            prediction = ImagePrediction.objects.create(
-                user=user,
-                image_url=image_url,
-                prediction=prediction_data
-            )
+                prediction.prediction = prediction_data
+                prediction.save()
             
             return prediction
                 
         except Exception as e:
             raise Exception(f"Error creating prediction: {str(e)}")
 
+
     def get_user_predictions(self, user):
         """
-        Get prediction history for a user
+        Get prediction history for a user and update any processing SHAP analyses
         """
         try:
             predictions = ImagePrediction.objects.filter(
                 user=user
             ).order_by('-created_at')
+            
+            # Check and update status for predictions with processing SHAP analyses
+            for prediction in predictions:
+                prediction_data = prediction.prediction or {}
+                shap_analysis = prediction_data.get('shap_analysis', {})
+                
+                # Check if SHAP analysis is in processing state
+                if (shap_analysis.get('status') == 'processing' and 
+                    'request_id' in shap_analysis):
+                    # Update status
+                    status = self.check_shap_analysis_status(
+                        shap_analysis['request_id'], 
+                        user.id
+                    )
+                    # Status update is handled within check_shap_analysis_status
+                    # No need to manually update here as it's already saved to database
+                    
+            # Refresh queryset to get updated data
+            predictions = ImagePrediction.objects.filter(
+                user=user
+            ).order_by('-created_at')
+            
             return predictions
+            
         except Exception as e:
             raise Exception(f"Error fetching predictions: {str(e)}")

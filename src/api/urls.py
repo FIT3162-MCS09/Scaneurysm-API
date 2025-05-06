@@ -44,6 +44,8 @@ urlpatterns = [
         path('predictions/create/', ImagePredictionView.as_view({'post': 'create_prediction'}), name='create-prediction'),
         path('predictions/history/', ImagePredictionView.as_view({'get': 'get_history'}), name='prediction-history'),
         path('predictions/status/', ImagePredictionView.as_view({'post': 'check_shap_status'}), name='check-status'),
+        path('predictions/poll/', ImagePredictionView.as_view({'post': 'update_shap_statuses'}), name='prediction-poll'),
+
     ])),
     
     # System endpoints
