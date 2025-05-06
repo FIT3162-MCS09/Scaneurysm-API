@@ -109,6 +109,48 @@ class ImagePredictionView(viewsets.ViewSet):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='user_id',
+                description='ID of the user to get predictions for',
+                required=False,
+                type=str
+            ),
+            OpenApiParameter(
+                name='prediction_id',
+                description='ID of the specific prediction to retrieve',
+                required=False,
+                type=int
+            )
+        ],
+        responses={
+            200: ImagePredictionSerializer(many=True),
+            404: {"type": "object", "properties": {"error": {"type": "string"}}}
+        }
+    )
+    def update_shap_statuses(self, request):
+        # """Update SHAP analysis statuses for a user's predictions"""
+        try:
+            # Get user from request data or use authenticated user
+            user_id = request.data.get('user_id')
+            user = request.user
+            if user_id:
+                user = user_id
+
+            # Get predictions and update SHAP statuses
+            predictions = self.prediction_service.get_user_predictions(user)
+            
+            # Serialize and return updated predictions
+            serializer = ImagePredictionSerializer(predictions, many=True)
+            return Response(serializer.data)
+
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
     @extend_schema(
         parameters=[
             OpenApiParameter(name='user_id', description='ID of the user', required=True, type=str),
