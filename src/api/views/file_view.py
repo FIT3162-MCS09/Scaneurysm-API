@@ -17,24 +17,60 @@ class FileUploadView(APIView):
         request=FileUploadSerializer,
         responses={
             201: FileUploadSerializer,
-            400: 'Bad Request'
+            400: {'description': 'Bad Request'},
+            404: {'description': 'User not found'},
+            500: {'description': 'Internal server error'}
         }
     )
     def post(self, request):
-        serializer = FileUploadSerializer(data=request.data)
-        if serializer.is_valid():
+        """
+        Upload a file for a specific user.
+        
+        Returns:
+            Response: JSON response with upload status
+        """
+        try:
+            serializer = FileUploadSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    {"error": "Invalid data", "details": serializer.errors}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             user_id = serializer.validated_data['user_id']
             file = serializer.validated_data['file']
-            print(user_id)
-            if User.objects.filter(id=user_id).exists() is False:
-                return Response({"error": "User does not exist"}, status=status.HTTP_400_BAD_REQUEST)
-            success = UploadService.upload_file(file, user_id)
-            if success:
-                return Response({"message": "File uploaded successfully"}, status=status.HTTP_201_CREATED)
-            else:
-                return Response({"error": "Failed to upload file"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check user existence
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return Response(
+                    {"error": "User does not exist"}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Upload file
+            result = UploadService.upload_file(file, user_id)
+            if not result:
+                return Response(
+                    {"error": "Failed to upload file"}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            return Response(
+                {
+                    "message": "File uploaded successfully",
+                    "user_id": user_id,
+                    "file_url": result
+                }, 
+                status=status.HTTP_201_CREATED
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": "An unexpected error occurred", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class UserFilesView(APIView):
     @extend_schema(
