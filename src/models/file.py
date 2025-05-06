@@ -1,9 +1,10 @@
-# File: src/models/file.py
 from django.db import models
 from django.conf import settings
 
-from .user import User
+# Change the User import
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
 class FileManager(models.Manager):
     def create_file(self, user, file_url):
@@ -13,8 +14,13 @@ class FileManager(models.Manager):
 
 
 class File(models.Model):
-    # Use settings.AUTH_USER_MODEL instead of direct import
-    user =models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    id = models.BigAutoField(primary_key=True)
+    # Update the User reference to use settings.AUTH_USER_MODEL
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='files'
+    )
     file_url = models.URLField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
