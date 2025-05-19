@@ -11,3 +11,4 @@ django-cors-headers==4.3.1
 cryptography==42.0.2
 requests>=2.31.0
 zappa
+pytest
