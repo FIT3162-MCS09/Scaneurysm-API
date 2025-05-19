@@ -9,8 +9,20 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+      - ~/.aws:/root/.aws:ro
+      - ~/.env:/root/.env:ro
     environment:
       - PYTHONUNBUFFERED=1
+      - ENDPOINT=${ENDPOINT}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - DEBUG=False
+      - USER=adminMCS09
+      - PASS=${PASS}
+      - DJANGO_SETTINGS_MODULE=core.settings
     command: python src/manage.py runserver 0.0.0.0:8000
     restart: unless-stopped
 

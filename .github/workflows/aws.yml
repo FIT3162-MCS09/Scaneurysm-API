@@ -27,14 +27,14 @@
 name: Deploy to Amazon ECS
 
 on:
-  push:
-    branches: [ "main" ]
+  # push:
+  #   branches: [ "main" ]
   workflow_dispatch:
 
 env:
   AWS_REGION: ap-southeast-1               # set this to your preferred AWS region, e.g. us-west-1
   ECR_REPOSITORY: mcs09/webapp           # set this to your Amazon ECR repository name
-  ECS_SERVICE: MCS09-service                 # set this to your Amazon ECS service name
+  ECS_SERVICE: mcs09-service                 # set this to your Amazon ECS service name
   ECS_CLUSTER: MCS09-cluster             # set this to your Amazon ECS cluster name
   ECS_TASK_DEFINITION: .aws/task-definition.json # set this to the path to your Amazon ECS task definition
                                                # file, e.g. .aws/task-definition.json
@@ -85,6 +85,12 @@ jobs:
         task-definition: ${{ env.ECS_TASK_DEFINITION }}
         container-name: ${{ env.CONTAINER_NAME }}
         image: ${{ steps.build-image.outputs.image }}
+        environment-variables: |
+          ENDPOINT=${{ secrets.DB_ENDPOINT }}
+          USER=${{ secrets.DB_USERNAME }}
+          PASS=${{ secrets.DB_PASSWORD }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1

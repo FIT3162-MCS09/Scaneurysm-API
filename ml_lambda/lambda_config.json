@@ -1,0 +1,10 @@
+{
+    "FunctionName": "shap-analysis",
+    "MemorySize": 2048,
+    "Timeout": 300000,
+    "Environment": {
+        "Variables": {
+            "PYTHONUNBUFFERED": "1"
+        }
+    }
+}

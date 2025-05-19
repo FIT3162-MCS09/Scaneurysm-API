@@ -1,0 +1,17 @@
+# Core ML dependencies (CPU versions)
+torch>=2.0.0 --index-url https://download.pytorch.org/whl/cpu
+torchvision>=0.15.0 --index-url https://download.pytorch.org/whl/cpu
+numpy==1.24.3
+shap>=0.42.0
+
+# Image processing (minimal install)
+Pillow>=10.0.0
+opencv-python-headless==4.7.0.72
+
+# Visualization (if really needed)
+matplotlib>=3.7.1
+seaborn>=0.12.2
+
+# AWS
+boto3==1.26.137
+requests>=2.31.0
