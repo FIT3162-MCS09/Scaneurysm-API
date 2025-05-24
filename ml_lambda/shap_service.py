@@ -12,6 +12,10 @@ import seaborn as sns
 import boto3
 from botocore.exceptions import ClientError
 import os
+from skimage.segmentation import slic, mark_boundaries
+from skimage.color import rgb2gray
+
+
 # Set matplotlib to use /tmp directory
 os.environ['MPLCONFIGDIR'] = '/tmp'
 # Set other temp directories
@@ -100,10 +104,28 @@ class ShapAnalysisService:
 
             image_pil = Image.open(io.BytesIO(response.content))
             image = np.array(image_pil)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            image = cv2.resize(image, (224, 224))
-            image = (image - np.min(image)) / (np.max(image) - np.min(image) + 1e-7)
-            image = image.astype(np.float32)
+
+            is_grayscale = len(image.shape) == 2 or (len(image.shape) == 3 and image.shape[2] == 1)
+            if is_grayscale:
+                if len(image.shape) == 3:
+                    image = image.squeeze(-1)
+                image_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+            else:
+                image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            image_rgb = cv2.resize(image_rgb, (224, 224))
+            image_normalized = (image_rgb - np.min(image_rgb)) / (np.max(image_rgb) - np.min(image_rgb) + 1e-7)
+            image_normalized = image_normalized.astype(np.float32)
+            # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            # image = cv2.resize(image, (224, 224))
+            # image = (image - np.min(image)) / (np.max(image) - np.min(image) + 1e-7)
+            # image = image.astype(np.float32)
+
+            # Prepare grayscale image for superpixel segmentation
+            if is_grayscale:
+                image_gray = cv2.resize(image, (224, 224))
+                image_gray = (image_gray - np.min(image_gray)) / (np.max(image_gray) - np.min(image_gray) + 1e-7)
+            else:
+                image_gray = rgb2gray(image_normalized)
 
             # SHAP analysis
             masker = shap.maskers.Image("inpaint_telea", (224, 224, 3))
@@ -154,28 +176,53 @@ class ShapAnalysisService:
             if len(mean_shap.shape) > 2:
                 mean_shap = np.mean(mean_shap, axis=-1)
 
+            labels = slic(image_gray, n_segments=20, compactness=20, sigma=1, start_label=0, channel_axis=None)
+            num_superpixels = np.max(labels) + 1
+            shap_vals_aneurysm = shap_values.values[0, :, :, :, 0].mean(axis=2)  # Use class 0 or 1 based on pred
+            shap_per_superpixel = np.zeros(num_superpixels)
+            for sp in range(num_superpixels):
+                mask = labels == sp
+                if mask.sum() > 0:
+                    shap_per_superpixel[sp] = shap_vals_aneurysm[mask].mean()
+            top_indices = np.argsort(shap_per_superpixel)[-5:][::-1]
+            top_shap_scores = shap_per_superpixel[top_indices].tolist()
+
             # Generate visualizations
-            plt.figure(figsize=(15, 5))
+            plt.figure(figsize=(20, 5))
             
             # Original image
-            plt.subplot(1, 3, 1)
-            plt.imshow(image)
+            plt.subplot(1, 4, 1)
+            plt.imshow(image_rgb)
             plt.title("Original Image")
             plt.axis('off')
             
             # SHAP heatmap
-            plt.subplot(1, 3, 2)
+            plt.subplot(1, 4, 2)
             sns.heatmap(mean_shap, cmap='RdBu_r', center=0)
             plt.title("SHAP Importance Heatmap")
             plt.axis('off')
             
             # Overlay
-            plt.subplot(1, 3, 3)
-            plt.imshow(image)
+            plt.subplot(1, 4, 3)
+            plt.imshow(image_rgb)
             plt.imshow(mean_shap, cmap='RdBu_r', alpha=0.6)
             plt.title("Overlay of Image and SHAP Values")
             plt.axis('off')
             
+            # Superpixel highlight plot
+            plt.subplot(1, 4, 4)
+            boundary_img = mark_boundaries(image_rgb / 255.0, labels, color=(1, 0, 0))
+            plt.imshow(boundary_img)
+            for idx, sp in enumerate(top_indices):
+                mask = labels == sp
+                y, x = np.where(mask)
+                if len(x) > 0 and len(y) > 0:
+                    centroid = (int(np.mean(x)), int(np.mean(y)))
+                    plt.text(centroid[0], centroid[1], str(idx + 1), color='white', fontsize=12,
+                             bbox=dict(facecolor='red', alpha=0.5))
+            plt.title("Top Superpixels for Aneurysm")
+            plt.axis('off')
+
             # Save plot to s3
             buf = io.BytesIO()
             plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
@@ -220,7 +267,12 @@ class ShapAnalysisService:
                 'quadrant_scores': quadrant_scores,
                 'relative_importances': relative_importances,
                 'stability_score': float(1 - (np.std(mean_shap) / (np.mean(mean_shap) + 1e-7))),
-                'importance_score': float(np.mean(np.abs(mean_shap)))
+                'importance_score': float(np.mean(np.abs(mean_shap))),
+                'superpixel_analysis': {
+                        'num_superpixels': int(num_superpixels),
+                        'top_superpixels': [int(idx) for idx in top_indices],
+                        'top_shap_scores': top_shap_scores
+                }
             },
             'metadata': {
                 'analysis_duration': analysis_duration,
