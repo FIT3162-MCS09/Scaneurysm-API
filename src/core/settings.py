@@ -178,6 +178,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://127.0.0.1:8080",
     'https://main.d1kbmfyaj1qcid.amplifyapp.com',
+    'https://scaneurysm.com',
+    'https://www.scaneurysm.com'
     # Add your production frontend URL when deploying
     # "https://your-frontend-domain.com",
 ]
