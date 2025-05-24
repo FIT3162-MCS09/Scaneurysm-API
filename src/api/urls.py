@@ -13,7 +13,7 @@ from rest_framework_simplejwt.views import (
 )
 from .views.health_view import HealthView
 from .views.protected_view import ProfileView
-from .views.search_view import PatientSearchView, UserSearchView, DoctorSearchView
+from .views.search_view import PatientSearchView, UserSearchView, DoctorSearchView, DoctorPatientsView
 from .views.prediction_view import ImagePredictionView  # Add this import
 
 # Group URL patterns by feature/functionality
@@ -30,7 +30,8 @@ urlpatterns = [
     path('search/', include([
         path('user/', UserSearchView.as_view(), name='search user'),
         path('patient/', PatientSearchView.as_view(), name='search patient'),
-        path('doctor/', DoctorSearchView.as_view(), name='search doctor')
+        path('doctor/', DoctorSearchView.as_view(), name='search doctor'),
+        path('doctor/patients/', DoctorPatientsView.as_view(), name='doctor-patients')
     ])),
     
     # File management endpoints

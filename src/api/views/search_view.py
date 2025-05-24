@@ -1,20 +1,16 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+from rest_framework.exceptions import PermissionDenied
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 from rest_framework.permissions import IsAuthenticated
 
-from ..serializers.file_serializer import FileUploadSerializer
-from ..serializers import FileSerializer
+
 from ..serializers.sign_up_serializer import PatientSerializer, DoctorSerializer
-from ..service.upload_service import UploadService
-from models.user import User
+from ..service.search_service import SearchService
 from models.patient import Patient
 from models.doctor import Doctor
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
-from rest_framework.permissions import AllowAny
 
 class PatientSearchView(APIView):
     permission_classes = [AllowAny]
@@ -37,13 +33,9 @@ class PatientSearchView(APIView):
             return Response({"error": "user_id parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            # Fetch the patient object using the user_id
-            patient = Patient.objects.get(user_id=user_id)
-            
-            # Serialize the patient object
+            # Use search service to fetch the patient
+            patient = SearchService.search_patient_by_user_id(user_id)
             serializer = PatientSerializer(patient)
-            
-            # Return the serialized data
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Patient.DoesNotExist:
             return Response({"error": "Patient not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -69,13 +61,9 @@ class DoctorSearchView(APIView):
             return Response({"error": "user_id parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            # Fetch the doctor object using the user_id
-            doctor = Doctor.objects.get(user_id=user_id)
-            
-            # Serialize the doctor object
+            # Use search service to fetch the doctor
+            doctor = SearchService.search_doctor_by_user_id(user_id)
             serializer = DoctorSerializer(doctor)
-            
-            # Return the serialized data
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Doctor.DoesNotExist:
             return Response({"error": "Doctor not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -133,38 +121,78 @@ class UserSearchView(APIView):
         last_name = request.query_params.get('last_name')
         email = request.query_params.get('email')
 
-        if not first_name and not last_name and not email:
-            return Response({"error": "At least one search parameter (first_name, last_name, or email) is required"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            # Use search service to fetch users
+            doctors_data, patients_data = SearchService.search_users(
+                first_name=first_name,
+                last_name=last_name,
+                email=email
+            )
 
-        # Filter users based on the provided parameters
-        filters = {}
-        if first_name:
-            filters['first_name__icontains'] = first_name  # Case-insensitive partial match
-        if last_name:
-            filters['last_name__icontains'] = last_name  # Case-insensitive partial match
-        if email:
-            filters['email__icontains'] = email  # Case-insensitive partial match
+            if not doctors_data and not patients_data:
+                return Response({"error": "No users found"}, status=status.HTTP_404_NOT_FOUND)
 
-        users = User.objects.filter(**filters)
+            return Response(
+                {"doctors": doctors_data, "patients": patients_data},
+                status=status.HTTP_200_OK
+            )
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not users.exists():
-            return Response({"error": "No users found"}, status=status.HTTP_404_NOT_FOUND)
-
-        # Divide users into doctors and patients
-        doctors = users.filter(role='doctor')  # Assuming 'role' field exists
-        patients = users.filter(role='patient')  # Assuming 'role' field exists
-
-        # Serialize the data
-        doctor_data = [
-            {"id": doctor.id, "first_name": doctor.first_name, "last_name": doctor.last_name, "email": doctor.email}
-            for doctor in doctors
-        ]
-        patient_data = [
-            {"id": patient.id, "first_name": patient.first_name, "last_name": patient.last_name, "email": patient.email}
-            for patient in patients
-        ]
-
-        return Response(
-            {"doctors": doctor_data, "patients": patient_data},
-            status=status.HTTP_200_OK
-        )
+class DoctorPatientsView(APIView):
+    permission_classes = [IsAuthenticated]
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name='doctor_id', description='ID of the doctor (must match the authenticated user)', required=True, type=str)
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="List of patients for the doctor",
+                response={
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "integer"},
+                            "user_id": {"type": "integer"},
+                            "first_name": {"type": "string"},
+                            "last_name": {"type": "string"},
+                            "email": {"type": "string"},
+                            "date_of_birth": {"type": "string", "format": "date"},
+                            "gender": {"type": "string"},
+                            "blood_type": {"type": "string"}
+                        }
+                    }
+                }
+            ),
+            404: OpenApiResponse(
+                description="Doctor not found",
+                response={"type": "object", "properties": {"error": {"type": "string"}}}
+            ),
+            403: OpenApiResponse(
+                description="Permission denied",
+                response={"type": "object", "properties": {"error": {"type": "string"}}}
+            )
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        # Get the logged-in user's ID from the JWT token
+        logged_in_user_id = str(request.user.id)
+        
+        # Get the requested doctor_id from query params
+        doctor_id = request.query_params.get('doctor_id')
+        
+        # Verify the logged-in user is requesting their own patients
+        if doctor_id != logged_in_user_id:
+            return Response(
+                {"error": "You can only view your own patients"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            patients = SearchService.search_doctor_patients(doctor_id)
+            return Response(patients, status=status.HTTP_200_OK)
+        except Doctor.DoesNotExist:
+            return Response({"error": "Doctor not found"}, status=status.HTTP_404_NOT_FOUND)
+        except PermissionDenied as e:
+            return Response({"error": str(e)}, status=status.HTTP_403_FORBIDDEN)
