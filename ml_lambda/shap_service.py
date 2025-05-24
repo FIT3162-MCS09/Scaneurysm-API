@@ -146,7 +146,7 @@ class ShapAnalysisService:
             print("Analyzing the image with SHAP...")
             explainer = shap.Explainer(model=model_pipeline, masker=masker)
             shap_values = explainer(
-                np.expand_dims(image, 0),
+                np.expand_dims(image_normalized, 0),
                 max_evals=70,
                 batch_size=5,
                 outputs=shap.Explanation.argsort.flip[:1]
@@ -161,7 +161,7 @@ class ShapAnalysisService:
                 )
             ])
             
-            image_tensor = transform(Image.fromarray((image * 255).astype(np.uint8)))
+            image_tensor = transform(Image.fromarray((image_normalized * 255).astype(np.uint8)))
             image_tensor = image_tensor.unsqueeze(0).to(next(self.model.parameters()).device)
 
             with torch.no_grad():
