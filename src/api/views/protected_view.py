@@ -28,4 +28,5 @@ class ProfileView(APIView):
             'role': user.role,
             'first_name': user.first_name or '',
             'last_name': user.last_name or '',
+            'gen_ai_whitelist': user.gen_ai_whitelist,
         })

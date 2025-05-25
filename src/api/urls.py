@@ -47,7 +47,11 @@ urlpatterns = [
         path('predictions/history/', ImagePredictionView.as_view({'get': 'get_history'}), name='prediction-history'),
         path('predictions/status/', ImagePredictionView.as_view({'post': 'check_shap_status'}), name='check-status'),
         path('predictions/poll/', ImagePredictionView.as_view({'post': 'update_shap_statuses'}), name='prediction-poll'),
-        path('report/latest/', ReportView.as_view(), name='latest-report'),  # Add this path
+    ])),
+    
+    # AI-generated reports endpoints
+    path('genai/', include([
+        path('reports/latest/', ReportView.as_view(), name='latest-genai-report'),  # Get latest AI-generated analysis report
     ])),
     
     # System endpoints
