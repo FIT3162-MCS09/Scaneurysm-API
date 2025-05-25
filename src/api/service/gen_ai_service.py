@@ -13,8 +13,8 @@ class GenAiService:
             raise ValueError("OPENROUTER_API_KEY environment variable is not set")
             
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
-        # self.model = "deepseek/deepseek-prover-v2:free"
-        self.model = "mistralai/mistral-7b-instruct:free" 
+        self.model = "deepseek/deepseek-prover-v2:free"
+        # self.model = "mistralai/mistral-7b-instruct:free" 
         self.cache_ttl = 60 * 60 * 24  # 24 hours in seconds
         
     def generate_analysis(self, prediction_data):
