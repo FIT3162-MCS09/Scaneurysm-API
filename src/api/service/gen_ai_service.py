@@ -14,6 +14,7 @@ class GenAiService:
             
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
         self.model = "deepseek/deepseek-prover-v2:free"
+        # self.model = "mistralai/mistral-7b-instruct:free" 
         self.cache_ttl = 60 * 60 * 24  # 24 hours in seconds
         
     def generate_analysis(self, prediction_data):
@@ -46,7 +47,7 @@ class GenAiService:
                     }
                 ],
                 "temperature": 0.3,  # Lower temperature for more focused medical analysis
-                "max_tokens": 150,    # Limit response to roughly one paragraph
+                "max_tokens": 700,    # Limit response to roughly one paragraph
                 "top_p": 0.9,        # Narrow down the token selection for more focused output
                 "frequency_penalty": 0.5  # Reduce repetition
             }
