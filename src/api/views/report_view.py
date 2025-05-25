@@ -19,14 +19,6 @@ class ReportView(APIView):
         )
 
     @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name='user_id',
-                description='ID of the user to get the latest analysis for',
-                required=True,
-                type=str
-            )
-        ],
         responses={
             200: {"type": "object"},
             404: {"type": "object", "properties": {"error": {"type": "string"}}},
@@ -35,15 +27,10 @@ class ReportView(APIView):
     )
     def get(self, request):
         """
-        Get the latest AI analysis for a user
+        Get the latest AI analysis for the authenticated user
         """
         try:
-            user_id = request.query_params.get('user_id')
-            if not user_id:
-                return Response(
-                    {'error': 'user_id is required'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            user_id = request.user.id
 
             analysis = self.report_service.get_latest_ai_analysis_by_user_id(user_id)
             if not analysis:
