@@ -91,6 +91,7 @@ jobs:
           PASS=${{ secrets.DB_PASSWORD }}
           AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          OPENROUTER_API_KEY=${{secrets.OPENROUTER_API_KEY}}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
