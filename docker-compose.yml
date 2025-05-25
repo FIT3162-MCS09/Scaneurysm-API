@@ -19,6 +19,7 @@ services:
       - DB_NAME=${DB_NAME}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - DEBUG=False
       - USER=adminMCS09
       - PASS=${PASS}

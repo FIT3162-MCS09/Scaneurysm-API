@@ -14,7 +14,8 @@ from rest_framework_simplejwt.views import (
 from .views.health_view import HealthView
 from .views.protected_view import ProfileView
 from .views.search_view import PatientSearchView, UserSearchView, DoctorSearchView, DoctorPatientsView
-from .views.prediction_view import ImagePredictionView  # Add this import
+from .views.prediction_view import ImagePredictionView  
+from .views.report_view import ReportView  # Add this import
 
 # Group URL patterns by feature/functionality
 urlpatterns = [
@@ -40,13 +41,13 @@ urlpatterns = [
         path('view/', UserFilesView.as_view(), name='user-files'),
     ])),
     
-    # # Analysis and prediction endpoints
+    # Analysis and prediction endpoints
     path('analysis/', include([
         path('predictions/create/', ImagePredictionView.as_view({'post': 'create_prediction'}), name='create-prediction'),
         path('predictions/history/', ImagePredictionView.as_view({'get': 'get_history'}), name='prediction-history'),
         path('predictions/status/', ImagePredictionView.as_view({'post': 'check_shap_status'}), name='check-status'),
         path('predictions/poll/', ImagePredictionView.as_view({'post': 'update_shap_statuses'}), name='prediction-poll'),
-
+        path('report/latest/', ReportView.as_view(), name='latest-report'),  # Add this path
     ])),
     
     # System endpoints
