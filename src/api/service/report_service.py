@@ -18,12 +18,12 @@ class ReportService:
         if not user.gen_ai_whitelist:
             return None
             
-        report = ImagePrediction.objects.filter(user=user).order_by('-created_at').first()
-        if not report:
+        latest_report = ImagePrediction.objects.filter(user=user).order_by('-created_at').first()
+        if not latest_report:
             return None
 
         # Check if analysis already exists for this report
-        existing_analysis = AIAnalysis.objects.filter(user=user, image_prediction=report).first()
+        existing_analysis = AIAnalysis.objects.filter(user=user, image_prediction=latest_report).first()
         if existing_analysis:
             return {
                 'generated_insight': existing_analysis.generated_insight,
@@ -32,15 +32,37 @@ class ReportService:
                 'metadata': existing_analysis.metadata,
                 'already_exists': True
             }
+
+        # If latest report has request_id, check its SHAP analysis status
+        if latest_report.request_id:
+            status = self.prediction_service.check_shap_analysis_status(latest_report.request_id, user.id)
+            if status.get('status') == 'processing':
+                # First try to get existing analysis for the current report
+                existing_analysis = AIAnalysis.objects.filter(user=user, image_prediction=latest_report).first()
+                if existing_analysis:
+                    return {
+                        'generated_insight': existing_analysis.generated_insight,
+                        'model_used': existing_analysis.model_used,
+                        'source': existing_analysis.source,
+                        'metadata': existing_analysis.metadata,
+                        'already_exists': True
+                    }
+                # If no existing analysis, return processing status
+                return {
+                    'status': 'processing',
+                    'request_id': latest_report.request_id,
+                    'prediction_id': latest_report.id
+                }
             
+
         # Convert ImagePrediction instance to dictionary
         prediction_data = {
-            'id': report.id,
-            'prediction': report.prediction,
-            'shap_explanation': report.shap_explanation,
-            'created_at': report.created_at.isoformat() if report.created_at else None,
-            'image_url': report.image_url,
-            'request_id': report.request_id,
+            'id': latest_report.id,
+            'prediction': latest_report.prediction,
+            'shap_explanation': latest_report.shap_explanation,
+            'created_at': latest_report.created_at.isoformat() if latest_report.created_at else None,
+            'image_url': latest_report.image_url,
+            'request_id': latest_report.request_id,
         }
         
         analysis = self.gen_ai_service.generate_analysis(prediction_data)
@@ -50,7 +72,7 @@ class ReportService:
         # Save the analysis to database
         AIAnalysis.objects.create(
             user=user,
-            image_prediction=report,
+            image_prediction=latest_report,
             generated_insight=analysis.get('generated_insight', ''),
             model_used=analysis.get('model_used', ''),
             source=analysis.get('source', 'gen_ai'),
