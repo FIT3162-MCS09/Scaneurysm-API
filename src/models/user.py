@@ -47,6 +47,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # Gen AI White List
+    gen_ai_whitelist = models.BooleanField(default=False, help_text='Whether the user is whitelisted for Gen AI features.')
     
     # Specify related_name to avoid clashes with auth.User
     groups = models.ManyToManyField(
