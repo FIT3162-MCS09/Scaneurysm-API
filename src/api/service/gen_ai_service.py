@@ -47,7 +47,7 @@ class GenAiService:
                     }
                 ],
                 "temperature": 0.3,  # Lower temperature for more focused medical analysis
-                "max_tokens": 500,    # Limit response to roughly one paragraph
+                "max_tokens": 700,    # Limit response to roughly one paragraph
                 "top_p": 0.9,        # Narrow down the token selection for more focused output
                 "frequency_penalty": 0.5  # Reduce repetition
             }
