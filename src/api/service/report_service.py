@@ -24,7 +24,15 @@ class ReportService:
 
         # Check if analysis already exists for this report
         existing_analysis = AIAnalysis.objects.filter(user=user, image_prediction=latest_report).first()
-        if existing_analysis:
+        # print(f"Existing analysis found: {existing_analysis}")
+        if existing_analysis and not existing_analysis.generated_insight:
+            # Delete the empty analysis to allow retry
+            existing_analysis.delete()
+            return {
+                'status': 'error',
+                'message': 'Previous analysis was incomplete. Please refresh to try again.'
+            }
+        elif existing_analysis:
             return {
                 'generated_insight': existing_analysis.generated_insight,
                 'model_used': existing_analysis.model_used,
@@ -67,7 +75,12 @@ class ReportService:
         
         analysis = self.gen_ai_service.generate_analysis(prediction_data)
         if not analysis:
-            return None
+            return {
+                'status': 'error',
+                'message': 'Analysis generation failed. Please refresh to try again.'
+            }
+
+ 
 
         # Save the analysis to database
         AIAnalysis.objects.create(
