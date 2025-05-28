@@ -42,7 +42,10 @@ class ReportView(APIView):
             return Response(analysis)
 
         except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error("An error occurred while processing the request", exc_info=True)
             return Response(
-                {'error': str(e)},
+                {'error': 'An internal error has occurred. Please try again later.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
